@@ -145,7 +145,7 @@ export default function DrawingCanvas() {
       setDrawingImage(imageDataUrl)
 
       try {
-        const response = await fetch('http://localhost:8900/calculate', {
+        const response = await fetch('https://ai-calculator-server.onrender.com/calculate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
