@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     siteName: 'MathSketch',
     images: [
       {
-        url: '/og-image.jpg', // Add an OG image to your public folder
+        url: 'https://res.cloudinary.com/dhvcqp8zp/image/upload/f_auto,q_auto/v1/mathsketch_assets/png36d4dtuipgh61eaqb', // Add an OG image to your public folder
         width: 1200,
         height: 630,
         alt: 'MathSketch - Math Solvig App',
@@ -27,8 +27,8 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'MathSketch',
     description: 'A math sketching app for solving math problems',
-    images: ['/og-image.jpg'], // Same image as OG
-    creator: '@nishantapps4', // Update with your Twitter handle
+    images: ['https://res.cloudinary.com/dhvcqp8zp/image/upload/f_auto,q_auto/v1/mathsketch_assets/png36d4dtuipgh61eaqb'], // Same image as OG
+    creator: '@_Nishant_Apps', // Update with your Twitter handle
   },
 }
 
