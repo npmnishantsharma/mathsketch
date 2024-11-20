@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import DrawingCanvas from '../../pages/DrawingCanvas';
 import { rtdb as database, auth } from '@/lib/firebase';
 import { ref, onValue, set, off } from 'firebase/database';
@@ -8,6 +8,16 @@ import { User } from 'firebase/auth';
 import { Theme } from '@/app/types';
 import { ShapeType } from '@/app/shapes/base';
 import { onAuthStateChanged } from "firebase/auth";
+import { Button } from "@/components/ui/button";
+import { Share2, QrCode, Copy, Check } from "lucide-react";
+import QRCode from 'qrcode';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface CollaborativeSession {
   createdAt: number;
@@ -37,10 +47,14 @@ interface CollaborativeSession {
 
 export default function CollaborativePage() {
   const params = useParams();
+  const router = useRouter();
   const sessionId = params.sessionid as string;
   const [session, setSession] = useState<CollaborativeSession | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [copied, setCopied] = useState(false);
 
   // Add auth listener
   useEffect(() => {
@@ -99,6 +113,35 @@ export default function CollaborativePage() {
     };
   }, [sessionId, user?.uid]);
 
+  // Generate QR code when share dialog opens
+  useEffect(() => {
+    if (showShareDialog) {
+      // Use absolute URL for QR code
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const collaborationUrl = `${baseUrl}/colab/${sessionId}`;
+      
+      QRCode.toDataURL(collaborationUrl)
+        .then(url => {
+          setQrCodeUrl(url);
+        })
+        .catch(err => {
+          console.error('Error generating QR code:', err);
+        });
+    }
+  }, [showShareDialog, sessionId]);
+
+  const handleCopyLink = () => {
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const collaborationUrl = `${baseUrl}/colab/${sessionId}`;
+    navigator.clipboard.writeText(collaborationUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleJoinSession = (sessionId: string) => {
+    router.push(`/colab/${sessionId}`);
+  };
+
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -113,6 +156,80 @@ export default function CollaborativePage() {
   return (
     <div className="relative min-h-screen">
       <DrawingCanvas isCollaboration sessionId={sessionId} />
+      
+      {/* Share Button */}
+      <Button
+        onClick={() => setShowShareDialog(true)}
+        className="fixed top-4 right-20 flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md shadow-lg transition-all duration-200"
+      >
+        <Share2 className="h-4 w-4" />
+        Share
+      </Button>
+
+      {/* Share Dialog */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share Collaboration</DialogTitle>
+            <DialogDescription>
+              Share this link with others to collaborate in real-time
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-6 py-4">
+            {/* QR Code */}
+            <div className="flex flex-col items-center gap-3">
+              <div className="bg-white p-2 rounded-lg">
+                {qrCodeUrl && (
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="QR Code" 
+                    className="w-48 h-48"
+                  />
+                )}
+              </div>
+              <span className="text-sm text-gray-500">
+                Scan with your phone camera
+              </span>
+            </div>
+
+            {/* Copy Link */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={`${typeof window !== 'undefined' ? window.location.origin : ''}/colab/${sessionId}`}
+                readOnly
+                className="flex-1 px-3 py-2 border rounded-md bg-gray-100"
+              />
+              <Button 
+                onClick={handleCopyLink}
+                variant="outline" 
+                className="flex items-center gap-2"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    Copy
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Join Button */}
+            <Button
+              onClick={() => handleJoinSession(sessionId)}
+              className="w-full"
+              variant="default"
+            >
+              Join Session
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

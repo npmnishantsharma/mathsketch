@@ -1,9 +1,11 @@
 "use client"
 import React, { useRef, useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
+import { ProgressBar } from "@/components/ui/progress-bar"  // Import ProgressBar component
 //import 
 import { v2 as cloudinary } from 'cloudinary' 
 import { Slider } from "@/components/ui/slider"
+import { useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { initializeApp } from "firebase/app";
 import { getAnalytics, logEvent, Analytics } from "firebase/analytics";
@@ -224,6 +226,7 @@ export default function DrawingCanvas({
   isCollaboration = false, 
   sessionId
 }: DrawingCanvasProps) {
+  const router = useRouter();  // Initialize router
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [color, setColor] = useState(() => defaultThemes[0].text); // Initialize with default theme's text color
@@ -311,6 +314,7 @@ export default function DrawingCanvas({
   const [sessionCollaborators, setSessionCollaborators] = useState<CollaboratorData[]>([]);
   const [activeSessions, setActiveSessions] = useState(0);
   const [wsConnected, setWsConnected] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);  // Add state for progress bar
   // Add Firebase Realtime Database refs
   const dbRef = useRef(getDatabase());
   const sessionRef = useRef<string | null>(null);
@@ -519,7 +523,6 @@ export default function DrawingCanvas({
     document.body.appendChild(fullScreenDiv);
   };
   const startDrawing = (event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    console.log('🎨 Starting drawing...', { isCollaboration, sessionId });
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -541,7 +544,6 @@ export default function DrawingCanvas({
     setIsDrawing(true);
 
     if (isCollaboration && sessionId && userProfile?.uid) {
-      console.log('📡 Syncing drawing start...', { x, y, userId: userProfile.uid });
       const rtdb = getDatabase();
       const drawingRef = ref(rtdb, `sessions/${sessionId}/currentDrawing/${userProfile.uid}`);
       set(drawingRef, {
@@ -554,31 +556,21 @@ export default function DrawingCanvas({
         lineWidth,
         tool,
         timestamp: new Date().toISOString(),
-      }).then(() => {
-        console.log('✅ Drawing start synced successfully');
-      }).catch(error => {
-        console.error('❌ Error syncing drawing start:', error);
       });
     }
   };
 
   const stopDrawing = () => {
-    console.log('🛑 Stopping drawing...');
     setIsDrawing(false);
     setLastX(null);
     setLastY(null);
 
     if (isCollaboration && sessionId && userProfile?.uid) {
-      console.log('📡 Syncing drawing stop...', { userId: userProfile.uid });
       const rtdb = getDatabase();
       const drawingRef = ref(rtdb, `sessions/${sessionId}/currentDrawing/${userProfile.uid}`);
       set(drawingRef, {
         isDrawing: false,
         timestamp: new Date().toISOString(),
-      }).then(() => {
-        console.log('✅ Drawing stop synced successfully');
-      }).catch(error => {
-        console.error('❌ Error syncing drawing stop:', error);
       });
     }
   };
@@ -604,8 +596,7 @@ export default function DrawingCanvas({
   };
 
   // Update the draw function
-  const draw = async (event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    console.log('✏️ Drawing...', { isDrawing, tool });
+  const draw = (event: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas || !isDrawing) return;
 
@@ -622,69 +613,47 @@ export default function DrawingCanvas({
       (event.clientY - rect.top) * scaleY
     );
 
-    if (isDrawingShape && shapeStartPos && selectedShape) {
-      // Shape drawing logic remains the same...
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    if (tool === 'eraser') {
+      context.globalCompositeOperation = 'destination-out';
     } else {
-      const context = canvas.getContext('2d');
-      if (!context) return;
+      context.globalCompositeOperation = 'source-over';
+      context.strokeStyle = color;
+      context.fillStyle = color;
+    }
+    
+    context.lineWidth = lineWidth;
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
 
-      if (tool === 'eraser') {
-        context.globalCompositeOperation = 'destination-out';
-      } else {
-        context.globalCompositeOperation = 'source-over';
-        context.strokeStyle = color;
-        context.fillStyle = color;
-      }
-      
-      context.lineWidth = lineWidth;
-      context.lineCap = 'round';
-      context.lineJoin = 'round';
+    context.beginPath();
+    context.moveTo(lastX || newX, lastY || newY);
+    context.lineTo(newX, newY);
+    context.stroke();
 
-      // Draw a line between points for smoother drawing
-      context.beginPath();
-      context.moveTo(lastX || newX, lastY || newY);
-      context.lineTo(newX, newY);
-      context.stroke();
+    context.beginPath();
+    context.arc(newX, newY, lineWidth / 2, 0, Math.PI * 2);
+    context.fill();
 
-      // Also draw a circle at the current point for better coverage
-      context.beginPath();
-      context.arc(newX, newY, lineWidth / 2, 0, Math.PI * 2);
-      context.fill();
+    setLastX(newX);
+    setLastY(newY);
 
-      // Update last position
-      setLastX(newX);
-      setLastY(newY);
-
-      // Sync drawing data in real-time
-      if (isCollaboration && sessionId && userProfile?.uid) {
-        try {
-          console.log('📡 Syncing drawing data...', {
-            lastX,
-            lastY,
-            newX,
-            newY,
-            tool,
-            userId: userProfile.uid
-          });
-          const rtdb = getDatabase();
-          const drawingRef = ref(rtdb, `sessions/${sessionId}/currentDrawing/${userProfile.uid}`);
-          
-          await set(drawingRef, {
-            isDrawing: true,
-            lastX: lastX || newX,
-            lastY: lastY || newY,
-            currentX: newX,
-            currentY: newY,
-            color: tool === 'eraser' ? 'transparent' : color,
-            lineWidth,
-            tool,
-            timestamp: new Date().toISOString(),
-          });
-          console.log('✅ Drawing data synced successfully');
-        } catch (error) {
-          console.error('❌ Error syncing drawing data:', error);
-        }
-      }
+    if (isCollaboration && sessionId && userProfile?.uid) {
+      const rtdb = getDatabase();
+      const drawingRef = ref(rtdb, `sessions/${sessionId}/currentDrawing/${userProfile.uid}`);
+      set(drawingRef, {
+        isDrawing: true,
+        lastX: lastX || newX,
+        lastY: lastY || newY,
+        currentX: newX,
+        currentY: newY,
+        color: tool === 'eraser' ? 'transparent' : color,
+        lineWidth,
+        tool,
+        timestamp: new Date().toISOString(),
+      });
     }
   };
 
@@ -1937,6 +1906,8 @@ Remember to:
       return;
     }
 
+    setIsConverting(true);  // Show progress bar
+
     try {
       // Generate a random session ID
       const sessionId = Math.random().toString(36).substring(2, 15);
@@ -1986,10 +1957,12 @@ Remember to:
       }
 
       // Redirect to collaboration URL
-      window.location.href = `/colab/${sessionId}`;  // Make sure this matches the route
+      router.push(`/colab/${sessionId}`);
 
     } catch (error) {
       console.error('Error creating collaboration session:', error);
+    } finally {
+      setIsConverting(false);  // Hide progress bar
     }
   };
 

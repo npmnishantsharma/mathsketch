@@ -48,4 +48,10 @@ export interface Participant {
   name: string | null;
   lastActive: string;
   photoURL?: string | undefined;
+}
+
+export interface CollaborationSession {
+  sessionId: string;
+  participants: string[];
+  code: string;
 } 
