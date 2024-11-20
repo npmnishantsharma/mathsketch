@@ -5,6 +5,7 @@ import { ProgressBar } from "@/components/ui/progress-bar"  // Import ProgressBa
 //import 
 import { v2 as cloudinary } from 'cloudinary' 
 import { Slider } from "@/components/ui/slider"
+import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { initializeApp } from "firebase/app";
@@ -19,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Paintbrush, Eraser, Minus, Plus, Menu, RotateCcw, Sparkles, MessageCircle, Send, Palette, HelpCircle, Type, Keyboard, ChevronUp, ChevronDown, X, Camera, Coins, Users, Share2 } from "lucide-react"
+import { Paintbrush, Eraser, Minus, Plus, Menu, RefreshCw, Sparkles, MessageCircle,RefreshCcw,Send, Palette, HelpCircle, Type, Keyboard, ChevronUp, ChevronDown, X, Camera, Coins, Users, RotateCcw } from "lucide-react"
 import CanvasIntroduction from './canvas-introduction'
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -1910,45 +1911,7 @@ Remember to:
 
     try {
       // Generate a random session ID
-      const sessionId = Math.random().toString(36).substring(2, 15);
-      
-      // Get current canvas state
-      const canvas = canvasRef.current;
-      if (!canvas) {
-        throw new Error('Canvas not found');
-      }
-      
-      const canvasState = canvas.toDataURL('image/png');
-      if (!canvasState) {
-        throw new Error('Failed to capture canvas state');
-      }
-
-      const rtdb = getDatabase();
-      
-      // Create session data object - remove the id field
-      const sessionData = {
-        createdAt: new Date().toISOString(),
-        createdBy: userProfile.uid,
-        participants: {
-          [userProfile.uid]: {
-            id: userProfile.uid,
-            name: userProfile.displayName,
-            lastActive: new Date().toISOString(),
-            photoURL: userProfile.photoURL
-          }
-        },
-        lastActive: new Date().toISOString(),
-        canvasState: {
-          data: canvasState,
-          timestamp: new Date().toISOString(),
-          userId: userProfile.uid
-        }
-      };
-
-      // Initialize session in RTDB
-      const sessionRef = ref(rtdb, `sessions/${sessionId}`);
-      await set(sessionRef, sessionData);
-
+      const newSessionId = uuidv4();
       // Log analytics event
       if (analytics) {
         logEvent(analytics, 'create_collaboration', {
@@ -2479,7 +2442,7 @@ Remember to:
                       onClick={handleCreateCollaboration}
                       style={{ backgroundColor: currentTheme.secondary, color: currentTheme.text }}
                     >
-                      <Share2 className="h-4 w-4" />
+                      <RefreshCcw className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
