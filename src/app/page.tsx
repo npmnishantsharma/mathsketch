@@ -2,7 +2,8 @@
 import React from 'react';
 import Link from 'next/link';
 import DrawingCanvas from './pages/DrawingCanvas';
-
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 export default function Home() {
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -18,6 +19,8 @@ export default function Home() {
         </Link>
       </nav>
       <DrawingCanvas/>
+      <Analytics />
+      <SpeedInsights />
     </main>
   );
 }

@@ -37,7 +37,7 @@ interface CollaborativeSession {
 
 export default function CollaborativePage() {
   const params = useParams();
-  const sessionId = params.sessionId as string;
+  const sessionId = params.sessionid as string;
   const [session, setSession] = useState<CollaborativeSession | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
