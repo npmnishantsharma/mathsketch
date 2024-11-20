@@ -1915,12 +1915,12 @@ Remember to:
       // Log analytics event
       if (analytics) {
         logEvent(analytics, 'create_collaboration', {
-          sessionId: sessionId
+          sessionId: newSessionId
         });
       }
 
       // Redirect to collaboration URL
-      router.push(`/colab/${sessionId}`);
+      router.push(`/colab/${newSessionId}`);
 
     } catch (error) {
       console.error('Error creating collaboration session:', error);
