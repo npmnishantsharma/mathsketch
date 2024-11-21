@@ -174,7 +174,7 @@ const QuestionBubbles: React.FC<{
   );
 };
 
-const CURRENT_UPDATE_CODE = "1.0.1-rwfhs"; // Change this when you want to force show the introduction
+const CURRENT_UPDATE_CODE = "1.5.0-vanillaBeta"; // Change this when you want to force show the introduction
 
 const UpdateBadge: React.FC<{ type: 'new' | 'updated' }> = ({ type }) => (
   <span 

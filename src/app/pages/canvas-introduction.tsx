@@ -3,7 +3,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Paintbrush, Eraser, Type, Sparkles, MessageCircle, Camera, Users, Shapes, Share2, Keyboard, Palette, HelpCircle } from "lucide-react"
+import { Paintbrush, Eraser, Type, Sparkles, MessageCircle, Camera, Users, Shapes, Share2, Keyboard, Palette, HelpCircle, Brain, Coins, Crown, Rocket } from "lucide-react"
 
 interface CanvasIntroductionProps {
   isOpen: boolean;
@@ -13,64 +13,76 @@ interface CanvasIntroductionProps {
 const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose }) => {
   const features = [
     {
-      icon: <Paintbrush className="w-5 h-5" />,
-      title: "Drawing Tools",
-      description: "Use the brush tool with adjustable size and color. Click and drag to draw smoothly."
+      icon: <Paintbrush className="w-5 h-5 text-blue-500" />,
+      title: "Smart Drawing Tools",
+      description: "Enhanced brush with pressure sensitivity and smooth line drawing. Multiple brush styles available.",
+      bgColor: "bg-blue-50 dark:bg-blue-900/20"
     },
     {
-      icon: <Eraser className="w-5 h-5" />,
-      title: "Eraser",
-      description: "Easily correct mistakes with the eraser tool. Adjustable size for precise corrections."
+      icon: <Brain className="w-5 h-5 text-purple-500" />,
+      title: "Advanced AI Analysis",
+      description: "Improved mathematical recognition with step-by-step solutions and detailed explanations.",
+      bgColor: "bg-purple-50 dark:bg-purple-900/20"
     },
     {
-      icon: <Type className="w-5 h-5" />,
-      title: "Text & Math Symbols",
-      description: "Add text annotations and mathematical symbols. Double-click text to edit."
+      icon: <Type className="w-5 h-5 text-green-500" />,
+      title: "Rich Text & LaTeX",
+      description: "Full LaTeX support for complex equations. Rich text formatting with multiple fonts.",
+      bgColor: "bg-green-50 dark:bg-green-900/20"
     },
     {
-      icon: <Keyboard className="w-5 h-5" />,
-      title: "Math Keyboard",
-      description: "Special keyboard for mathematical symbols and equations. Quick access to common math notations."
+      icon: <Keyboard className="w-5 h-5 text-pink-500" />,
+      title: "Enhanced Math Keyboard",
+      description: "Expanded symbol library with custom shortcuts. Quick access to frequently used expressions.",
+      bgColor: "bg-pink-50 dark:bg-pink-900/20"
     },
     {
-      icon: <Shapes className="w-5 h-5" />,
-      title: "Shapes",
-      description: "Add geometric shapes like circles, rectangles, triangles, and arrows. Resize and modify shapes easily."
-    },
-    {
-      icon: <Share2 className="w-5 h-5" />,
+      icon: <Share2 className="w-5 h-5 text-indigo-500" />,
       title: "Real-time Collaboration",
-      description: "Create collaboration sessions and work together in real-time. Share your workspace with others."
+      description: "Multi-user editing with chat and presence indicators. Share and solve problems together.",
+      bgColor: "bg-indigo-50 dark:bg-indigo-900/20"
     },
     {
-      icon: <Sparkles className="w-5 h-5" />,
-      title: "AI Analysis",
-      description: "Get instant solutions and step-by-step explanations for mathematical problems using AI."
+      icon: <Coins className="w-5 h-5 text-yellow-500" />,
+      title: "Points & Rewards",
+      description: "Earn points for solving problems and helping others. Unlock special features and themes.",
+      bgColor: "bg-yellow-50 dark:bg-yellow-900/20"
     },
     {
-      icon: <MessageCircle className="w-5 h-5" />,
-      title: "Interactive Chat",
-      description: "Ask follow-up questions and get detailed explanations through the AI chat interface."
+      icon: <Crown className="w-5 h-5 text-orange-500" />,
+      title: "Interactive Quizzes",
+      description: "AI-generated quizzes based on your work. Track progress and earn bonus points.",
+      bgColor: "bg-orange-50 dark:bg-orange-900/20"
     },
     {
-      icon: <Camera className="w-5 h-5" />,
-      title: "Camera Input",
-      description: "Capture and solve problems directly from your device's camera or textbooks."
+      icon: <MessageCircle className="w-5 h-5 text-cyan-500" />,
+      title: "Smart Chat Assistant",
+      description: "Context-aware AI chat that remembers your previous questions and work.",
+      bgColor: "bg-cyan-50 dark:bg-cyan-900/20"
     },
     {
-      icon: <Palette className="w-5 h-5" />,
-      title: "Themes",
-      description: "Customize your workspace with different color themes. Create and save your own themes."
+      icon: <Camera className="w-5 h-5 text-red-500" />,
+      title: "Advanced Image Input",
+      description: "Multi-camera support with image enhancement for better recognition.",
+      bgColor: "bg-red-50 dark:bg-red-900/20"
     },
     {
-      icon: <Users className="w-5 h-5" />,
-      title: "Session Management",
-      description: "Track active sessions and collaborators. Secure workspace with authentication."
+      icon: <Shapes className="w-5 h-5 text-violet-500" />,
+      title: "Dynamic Shapes",
+      description: "Resizable geometric shapes with snapping and alignment guides.",
+      bgColor: "bg-violet-50 dark:bg-violet-900/20"
     },
     {
-      icon: <HelpCircle className="w-5 h-5" />,
-      title: "Help & Support",
-      description: "Access quick help and tutorials. Learn about new features and updates."
+      icon: <Palette className="w-5 h-5 text-emerald-500" />,
+      title: "Custom Themes",
+      description: "Create and share custom themes. Dark mode and high contrast options.",
+      bgColor: "bg-emerald-50 dark:bg-emerald-900/20"
+    },
+    {
+      icon: <Rocket className="w-5 h-5 text-rose-500" />,
+      title: "Performance Boost",
+      description: "Optimized drawing engine with smoother animations and faster responses.",
+      bgColor: "bg-rose-50 dark:bg-rose-900/20"
     }
   ];
 
@@ -80,16 +92,20 @@ const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose
     { key: "Double Click", description: "Edit text box" },
     { key: "Shift + Drag", description: "Draw straight lines" },
     { key: "Space", description: "Toggle toolbar" },
-    { key: "Delete", description: "Remove selected item" }
+    { key: "Delete", description: "Remove selected item" },
+    { key: "Ctrl + S", description: "Save session" },
+    { key: "Ctrl + C", description: "Copy selection" }
   ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Welcome to MathSketch!</DialogTitle>
+          <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Welcome to MathSketch!
+          </DialogTitle>
           <DialogDescription className="text-lg">
-            Your AI-powered mathematics learning assistant
+            Your AI-powered mathematics learning assistant - Now with more features!
           </DialogDescription>
         </DialogHeader>
         
@@ -99,14 +115,14 @@ const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose
             {features.map((feature, index) => (
               <div 
                 key={index}
-                className="flex items-start space-x-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className={`flex items-start space-x-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:scale-105 transition-all ${feature.bgColor}`}
               >
-                <div className="flex-shrink-0 p-2 rounded-full bg-blue-100 dark:bg-blue-900">
+                <div className="flex-shrink-0 p-2 rounded-full bg-white dark:bg-gray-800 shadow-lg">
                   {feature.icon}
                 </div>
                 <div>
                   <h3 className="font-semibold">{feature.title}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     {feature.description}
                   </p>
                 </div>
@@ -115,12 +131,14 @@ const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose
           </div>
 
           {/* Keyboard Shortcuts */}
-          <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
-            <h3 className="font-semibold mb-3">⌨️ Keyboard Shortcuts</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          <div className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <span className="text-xl">⌨️</span> Keyboard Shortcuts
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {shortcuts.map((shortcut, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <kbd className="px-2 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded">
+                <div key={index} className="flex items-center space-x-2 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm">
+                  <kbd className="px-2 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded-md font-mono">
                     {shortcut.key}
                   </kbd>
                   <span className="text-sm text-gray-600 dark:text-gray-300">
@@ -132,36 +150,65 @@ const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose
           </div>
 
           {/* What's New Section */}
-          <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-            <h3 className="font-semibold mb-2">🆕 What's New</h3>
-            <ul className="list-disc list-inside space-y-2 text-sm">
-              <li>Real-time collaboration with multiple users</li>
-              <li>Enhanced shape tools with resizing and customization</li>
-              <li>Improved math keyboard with more symbols</li>
-              <li>New themes and customization options</li>
-              <li>Better drawing precision and performance</li>
-              <li>Session tracking and security improvements</li>
+          <div className="p-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <span className="text-xl">🆕</span> Latest Updates
+            </h3>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+              <li className="flex items-center gap-2 bg-white dark:bg-gray-800 p-3 rounded-lg">
+                <Sparkles className="w-4 h-4 text-yellow-500" />
+                <span>Enhanced AI with better math recognition</span>
+              </li>
+              <li className="flex items-center gap-2 bg-white dark:bg-gray-800 p-3 rounded-lg">
+                <Users className="w-4 h-4 text-blue-500" />
+                <span>Multi-user collaboration improvements</span>
+              </li>
+              <li className="flex items-center gap-2 bg-white dark:bg-gray-800 p-3 rounded-lg">
+                <Crown className="w-4 h-4 text-purple-500" />
+                <span>New points system and rewards</span>
+              </li>
+              <li className="flex items-center gap-2 bg-white dark:bg-gray-800 p-3 rounded-lg">
+                <Brain className="w-4 h-4 text-pink-500" />
+                <span>Interactive quizzes with AI feedback</span>
+              </li>
             </ul>
           </div>
 
-          {/* Help Resources */}
-          <div className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20">
-            <h3 className="font-semibold mb-2">💡 Quick Tips</h3>
-            <ul className="list-disc list-inside space-y-2 text-sm">
-              <li>Use the crosshair cursor for precise drawing</li>
-              <li>Try the AI analysis for step-by-step solutions</li>
-              <li>Share your session URL to collaborate</li>
-              <li>Save custom themes for quick access</li>
-              <li>Double-click text boxes to edit content</li>
-              <li>Press '?' anytime to show this help</li>
-            </ul>
+          {/* Quick Tips */}
+          <div className="p-4 rounded-lg bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20">
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <span className="text-xl">💡</span> Pro Tips
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                <p className="text-sm">Use the AI chat for step-by-step guidance</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                <p className="text-sm">Complete quizzes to earn bonus points</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                <p className="text-sm">Share your workspace for live collaboration</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                <p className="text-sm">Try different themes for better visibility</p>
+              </div>
+            </div>
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => window.open('https://docs.mathsketch.app', '_blank')}>
+            <Button 
+              variant="outline" 
+              onClick={() => window.open('https://docs.mathsketch.app', '_blank')}
+              className="hover:scale-105 transition-transform"
+            >
               Documentation
             </Button>
-            <Button onClick={onClose}>Get Started</Button>
+            <Button 
+              onClick={onClose}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 transition-all"
+            >
+              Get Started
+            </Button>
           </div>
         </div>
       </DialogContent>

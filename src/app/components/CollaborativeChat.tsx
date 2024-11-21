@@ -465,11 +465,18 @@ export default function CollaborativeChat({
         ))}
       </AnimatePresence>
 
-      {/* Chat Window */}
+      {/* Chat Window - Updated positioning */}
       {isOpen && (
-        <div 
-          className="absolute bottom-16 right-0 w-80 rounded-lg shadow-xl"
-          style={{ backgroundColor: theme.background, border: `1px solid ${theme.primary}` }}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          className="absolute bottom-16 right-0 w-80 rounded-lg shadow-xl max-h-[calc(100vh-120px)]"
+          style={{ 
+            backgroundColor: theme.background, 
+            border: `1px solid ${theme.primary}`,
+            transform: 'translateY(0)',
+          }}
         >
           {/* Header */}
           <div className="flex items-center justify-between p-3 border-b" style={{ borderColor: theme.secondary }}>
@@ -605,7 +612,7 @@ export default function CollaborativeChat({
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );
