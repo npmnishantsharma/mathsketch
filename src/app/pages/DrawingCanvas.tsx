@@ -40,7 +40,6 @@ import AuthDialog from '../components/AuthDialog';
 import { getUserData, saveQuizData, UserData } from '@/lib/firebase-user';
 import { ShapesMenu } from '../components/ShapesMenu';
 import { ShapeType } from '../shapes/base';
-import { Theme } from "../types";
 import { FontStyle, TextBox, QuizQuestion, QuizState, UserProfile, Participant } from '../types/interfaces';
 import { Shape } from '../shapes/types';
 import { createRectangle } from '../shapes/rectangle';
@@ -53,6 +52,7 @@ import { doc, updateDoc, increment, serverTimestamp, arrayUnion, getDoc, setDoc,
 import { db } from '@/lib/firebase';
 import { getDatabase, ref, onValue, set, push, off, get, DataSnapshot } from "firebase/database";
 import CollabChat from '../components/CollabChat';
+import type { Theme } from '@/app/types/interfaces';
 
 interface ApiResponse {
   message: string;
@@ -74,34 +74,40 @@ interface ChatMessage {
   content: string;
 }
 
+const purchasedThemes: Theme[] = [];
+
 const defaultThemes: Theme[] = [
   {
-    name: "Dark",
-    background: "#1a1a1a",
-    text: "#FFFFFF",
-    primary: "#3B82F6",
-    secondary: "#6B7280",
+    id: "light",
+    name: "light",
+    background: "#ffffff",
+    text: "#000000",
+    primary: "#3b82f6",
+    secondary: "#64748b"
   },
   {
-    name: "Sepia",
-    background: "#F1E7D0",
-    text: "#433422",
-    primary: "#A0522D",
-    secondary: "#8B4513",
+    id: "dark",
+    name: "dark",
+    background: "#0f172a",
+    text: "#ffffff",
+    primary: "#3b82f6",
+    secondary: "#64748b"
   },
   {
-    name: "Slate",
-    background: "#2C3E50",
-    text: "#ECF0F1",
-    primary: "#3498DB",
-    secondary: "#7F8C8D",
+    id: "blue",
+    name: "blue",
+    background: "#1e40af",
+    text: "#ffffff",
+    primary: "#3b82f6",
+    secondary: "#64748b"
   },
   {
-    name: "Ocean",
-    background: "#1B2B34",
-    text: "#D8DEE9",
-    primary: "#5FB3B3",
-    secondary: "#4F5B66",
+    id: "green",
+    name: "green",
+    background: "#166534",
+    text: "#ffffff",
+    primary: "#3b82f6",
+    secondary: "#64748b"
   }
 ];
 
@@ -222,6 +228,22 @@ interface DrawingState {
   tool: 'brush' | 'eraser' | 'text' | 'shape';
 }
 
+// Add this helper function at the top of the file
+const getTailwindColor = (className: string) => {
+  const colorMap: { [key: string]: string } = {
+    'purple-600': '#9333EA',
+    'indigo-700': '#4338CA',
+    'blue-900': '#1E3A8A',
+    // ... (add all color mappings from PreviewModal)
+  };
+
+  const colorKey = className.replace('from-', '')
+    .replace('via-', '')
+    .replace('to-', '');
+    
+  return colorMap[colorKey] || '#000000';
+};
+
 // Update the component definition - remove collaborators from props
 export default function DrawingCanvas({ 
   isCollaboration = false, 
@@ -230,7 +252,7 @@ export default function DrawingCanvas({
   const router = useRouter();  // Initialize router
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
-  const [color, setColor] = useState(() => defaultThemes[0].text); // Initialize with default theme's text color
+  const [color, setColor] = useState('#FFFF'); // Initialize with default theme's text color
   const [lineWidth, setLineWidth] = useState(5)
   const [tool, setTool] = useState<'brush' | 'eraser' | 'text' | 'shape'>('brush')
   const [showToolbar, setShowToolbar] = useState(true)
@@ -263,12 +285,13 @@ export default function DrawingCanvas({
     return savedCustomThemes || [];
   });
   const [newTheme, setNewTheme] = useState<Theme>({
+    id: "",  // Add this line
     name: "",
     background: "#000000",
     text: "#FFFFFF",
     primary: "#3B82F6",
     secondary: "#6B7280",
-  })
+  });
   const [showNewThemeDialog, setShowNewThemeDialog] = useState(false)
   const [textInput, setTextInput] = useState('')
   const [isAddingText, setIsAddingText] = useState(false)
@@ -384,19 +407,60 @@ export default function DrawingCanvas({
   useEffect(() => {
     const fetchUserData = async () => {
       if (userProfile?.uid) {
-        const userData = await getUserData(userProfile.uid);
-        if (userData) {
-          setUserDbData(userData);
+        try {
+          const userDoc = await getDoc(doc(db, 'users', userProfile.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            if ('uid' in userData && 'email' in userData) {  // Basic validation
+              setUserDbData(userData as UserData);
+            }
+
+            // Combine all themes: default, custom, and purchased
+            let allThemes = [...defaultThemes];
+
+            // Add custom themes if they exist
+            if (userData.customThemes) {
+              allThemes = [...allThemes, ...userData.customThemes];
+            }
+
+            // Add purchased themes if they exist
+            if (userData.purchasedThemes) {
+              const purchasedThemes = userData.purchasedThemes;
+              // Filter out any duplicates
+              const newThemes = purchasedThemes.filter(
+                (purchasedTheme: Theme) => 
+                  !allThemes.some(theme => theme.id === purchasedTheme.id)
+              );
+              allThemes = [...allThemes, ...newThemes];
+            }
+
+            // Set all themes
+            setCustomThemes(allThemes);
+
+            // Set current theme if it exists
+            if (userData.currentTheme) {
+              setCurrentTheme(userData.currentTheme);
+              setColor(userData.currentTheme.text);
+            }
+          } else {
+            // Initialize with default theme if user doc doesn't exist
+            await setDoc(doc(db, 'users', userProfile.uid), {
+              currentTheme: defaultThemes[0],
+              customThemes: [],
+              purchasedThemes: [],
+              lastUpdated: serverTimestamp()
+            });
+            setCurrentTheme(defaultThemes[0]);
+            setColor(defaultThemes[0].text);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
         }
       }
     };
 
-    if (userProfile) {
-      fetchUserData();
-    } else {
-      setUserDbData(null);
-    }
-  }, [userProfile]);
+    fetchUserData();
+  }, [userProfile?.uid]);
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -410,19 +474,28 @@ export default function DrawingCanvas({
         tempCanvas.height = canvas.height
         tempContext?.drawImage(canvas, 0, 0)
 
-        // Use the parent container's dimensions
-        const container = canvas.parentElement
-        if (container) {
-          canvas.width = container.clientWidth
-          canvas.height = container.clientHeight
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Reapply gradient or background
+        if (currentTheme.gradientFrom && currentTheme.gradientTo) {
+          const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+          const fromColor = getTailwindColor(currentTheme.gradientFrom.replace('from-', ''));
+          const viaColor = currentTheme.gradientVia ? getTailwindColor(currentTheme.gradientVia.replace('via-', '')) : null;
+          const toColor = getTailwindColor(currentTheme.gradientTo.replace('to-', ''));
+
+          gradient.addColorStop(0, fromColor);
+          if (viaColor) {
+            gradient.addColorStop(0.5, viaColor);
+          }
+          gradient.addColorStop(1, toColor);
+          context.fillStyle = gradient;
         } else {
-        canvas.width = window.innerWidth
-        canvas.height = window.innerHeight
+          context.fillStyle = currentTheme.background;
         }
         
-        context.fillStyle = currentTheme.background
-        context.fillRect(0, 0, canvas.width, canvas.height)
-        context.drawImage(tempCanvas, 0, 0)
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(tempCanvas, 0, 0);
 
         context.lineCap = 'round'
         context.lineJoin = 'round'
@@ -1027,7 +1100,10 @@ Remember to:
   const handleNewThemeSubmit = async () => {
     if (newTheme.name.trim() === '') return;
     
-    const theme = { ...newTheme };
+    const theme: Theme = { 
+      ...newTheme,
+      id: uuidv4(), // Generate a unique ID for the theme
+    };
     const updatedCustomThemes = [...customThemes, theme];
     
     setCustomThemes(updatedCustomThemes);
@@ -1046,12 +1122,12 @@ Remember to:
         console.error('Error saving new theme to database:', error);
       }
     } else {
-      // Fallback to localStorage for non-logged in users
       saveTheme(theme, updatedCustomThemes);
     }
 
     setShowNewThemeDialog(false);
     setNewTheme({
+      id: "",  // Add this line
       name: "",
       background: "#000000",
       text: "#FFFFFF",
@@ -1192,7 +1268,25 @@ Remember to:
       localStorage.setItem('customThemes', JSON.stringify(customThemes));
     }
   }, [customThemes]);
-
+  const handleCreateCollaboration = async () => {
+    if (!userProfile?.uid) {
+      setShowAuthDialog(true);
+      return;
+    }
+  
+    setIsConverting(true);
+    try {
+      const newSessionId = uuidv4();
+      if (analytics) {
+        logEvent(analytics, 'create_collaboration', { sessionId: newSessionId });
+      }
+      router.push(`/colab/${newSessionId}`);
+    } catch (error) {
+      console.error('Error creating collaboration session:', error);
+    } finally {
+      setIsConverting(false);
+    }
+  };
   const increaseFontSize = () => {
     setFontSize(prev => Math.min(prev + 2, 72)); // Max font size 72
     if (selectedTextBox) {
@@ -1798,163 +1892,6 @@ Remember to:
     setIsResizing(false);
     setResizeHandle(null);
   };
-
-  // Add this effect to fetch themes from DB when user logs in
-  useEffect(() => {
-    const fetchUserThemes = async () => {
-      if (userProfile?.uid) {
-        try {
-          const userDocRef = doc(db, 'users', userProfile.uid);
-          const userDoc = await getDoc(userDocRef);
-          
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            
-            // Get custom themes from DB
-            if (userData.customThemes) {
-              setCustomThemes(userData.customThemes);
-            }
-            
-            // Get current theme from DB
-            if (userData.currentTheme) {
-              setCurrentTheme(userData.currentTheme);
-              setColor(userData.currentTheme.text);
-            }
-          } else {
-            // If user doc doesn't exist, save default theme
-            await updateDoc(userDocRef, {
-              currentTheme: defaultThemes[0],
-              customThemes: [],
-              lastUpdated: serverTimestamp()
-            });
-          }
-        } catch (error) {
-          console.error('Error fetching themes from database:', error);
-        }
-      }
-    };
-
-    fetchUserThemes();
-  }, [userProfile?.uid]);
-
-  // Update the collaboration effect
-  useEffect(() => {
-    if (!isCollaboration || !sessionId || !userProfile?.uid) return;
-
-    const rtdb = getDatabase();
-    const drawingsRef = ref(rtdb, `sessions/${sessionId}/currentDrawing`);
-    
-    const unsubscribe = onValue(drawingsRef, (snapshot) => {
-      if (!snapshot.exists()) return;
-      
-      const drawingData = snapshot.val();
-      console.log('📥 Received drawing data:', drawingData);
-      
-      Object.entries(drawingData).forEach(([uid, data]: [string, any]) => {
-        if (uid === userProfile.uid) return;
-
-        console.log('🎨 Rendering remote drawing:', { uid, data });
-        const canvas = canvasRef.current;
-        const context = canvas?.getContext('2d');
-        if (!context || !canvas || !data.isDrawing) return;
-
-        // Match the local drawing style
-        if (data.tool === 'eraser') {
-          context.globalCompositeOperation = 'destination-out';
-        } else {
-          context.globalCompositeOperation = 'source-over';
-          context.strokeStyle = data.color;
-          context.fillStyle = data.color;
-        }
-        
-        context.lineWidth = data.lineWidth;
-        context.lineCap = 'round';
-        context.lineJoin = 'round';
-
-        // Draw line between points
-        context.beginPath();
-        context.moveTo(data.lastX, data.lastY);
-        context.lineTo(data.currentX, data.currentY);
-        context.stroke();
-
-        // Draw point at current position
-        context.beginPath();
-        context.arc(data.currentX, data.currentY, data.lineWidth / 2, 0, Math.PI * 2);
-        context.fill();
-
-        console.log('✅ Remote drawing rendered successfully');
-      });
-    });
-
-    return () => {
-      console.log('🧹 Cleaning up collaboration listeners...');
-      unsubscribe();
-      if (userProfile?.uid) {
-        const drawingRef = ref(rtdb, `sessions/${sessionId}/currentDrawing/${userProfile.uid}`);
-        set(drawingRef, null).then(() => {
-          console.log('✅ Drawing data cleaned up successfully');
-        }).catch(error => {
-          console.error('❌ Error cleaning up drawing data:', error);
-        });
-      }
-    };
-  }, [isCollaboration, sessionId, userProfile?.uid]);
-
-  // Add this function near your other handlers
-  const handleCreateCollaboration = async () => {
-    if (!userProfile?.uid) {
-      setShowAuthDialog(true);
-      return;
-    }
-
-    setIsConverting(true);  // Show progress bar
-
-    try {
-      // Generate a random session ID
-      const newSessionId = uuidv4();
-      // Log analytics event
-      if (analytics) {
-        logEvent(analytics, 'create_collaboration', {
-          sessionId: newSessionId
-        });
-      }
-
-      // Redirect to collaboration URL
-      router.push(`/colab/${newSessionId}`);
-
-    } catch (error) {
-      console.error('Error creating collaboration session:', error);
-    } finally {
-      setIsConverting(false);  // Hide progress bar
-    }
-  };
-
-  // Update the useEffect for collaboration to use RTDB
-  useEffect(() => {
-    if (!isCollaboration || !sessionId || !userProfile?.uid) return;
-
-    try {
-      const rtdb = getDatabase();
-      const sessionRef = ref(rtdb, `sessions/${sessionId}`);
-      
-      // Subscribe to session updates
-      const unsubscribe = onValue(sessionRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const sessionData = snapshot.val();
-          if (sessionData.canvasState?.data) {
-            loadCanvasState(sessionData.canvasState.data);
-          }
-        }
-      });
-
-      return () => {
-        // Cleanup subscription
-        unsubscribe();
-      };
-    } catch (error) {
-      console.error('Error setting up collaboration:', error);
-    }
-  }, [isCollaboration, sessionId, userProfile?.uid]);
 
   // Add this effect to track collaborators
   useEffect(() => {

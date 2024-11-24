@@ -4,6 +4,7 @@ export interface UserProfile {
   photoURL: string | null;
   provider: 'google' | 'email';
   uid: string;
+  profileImage?: string;
 }
 
 export interface FontStyle {
@@ -49,6 +50,12 @@ export interface Theme {
   text: string;
   primary: string;
   secondary: string;
+  gradientFrom?: string;
+  gradientVia?: string;
+  gradientTo?: string;
+  preview?: string;
+  description?: string;
+  price?: number;
 }
 
 export interface UserData {
@@ -66,4 +73,14 @@ export interface UserData {
   }[];
   profileImage?: string;
   lastUpdated?: Date;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  displayName: string | null;
+  isAdmin?: boolean;
+  createdAt: any; // or Timestamp from firebase
+  lastLogin: any; // or Timestamp from firebase
+  profileImage?: string;
 } 

@@ -18,6 +18,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toast } from 'react-hot-toast';
+import { useEmailVerification } from '@/hooks/useEmailVerification';
+import { sendEmailVerification } from "firebase/auth";
 
 interface CollaborativeSession {
   createdAt: number;
@@ -55,6 +58,7 @@ export default function CollaborativePage() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const { isVerified, isLoading } = useEmailVerification();
 
   // Add auth listener
   useEffect(() => {
@@ -64,6 +68,15 @@ export default function CollaborativePage() {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!isLoading && !isVerified) {
+      toast.error('Email verification required', {
+        duration: 5000,
+      });
+      router.push('/');
+    }
+  }, [isLoading, isVerified, router]);
 
   useEffect(() => {
     const sessionRef = ref(database, `collaborativeSessions/${sessionId}`);
@@ -141,6 +154,42 @@ export default function CollaborativePage() {
   const handleJoinSession = (sessionId: string) => {
     router.push(`/colab/${sessionId}`);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!isVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center p-8 max-w-md">
+          <h2 className="text-2xl font-bold mb-4">Email Verification Required</h2>
+          <p className="text-gray-600 mb-6">
+            You need to verify your email address to join collaboration sessions.
+          </p>
+          <Button
+            onClick={async () => {
+              if (auth.currentUser) {
+                try {
+                  await sendEmailVerification(auth.currentUser);
+                  toast.success('Verification email sent! Please check your inbox.');
+                } catch (error) {
+                  toast.error('Failed to send verification email. Please try again.');
+                }
+              }
+            }}
+            className="bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            Send Verification Email
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (

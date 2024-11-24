@@ -6,6 +6,9 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { Toaster } from 'sonner';
+import VerificationBar from '@/components/verification-bar';
+import { AuthProvider } from '@/context/AuthContext';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -44,7 +47,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body>
+        <main>
+          <AuthProvider>
+            <VerificationBar />
+            {children}
+          </AuthProvider>
+        </main>
+        <Toaster />
+      </body>
     </html>
   )
 }

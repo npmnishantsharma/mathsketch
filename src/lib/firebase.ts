@@ -3,6 +3,7 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 import { getDatabase } from 'firebase/database';
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_apiKey,
@@ -20,6 +21,7 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
 export { getDatabase as database } from 'firebase/database';
+export const storage = getStorage(app);
 
 export const initAnalytics = async () => {
   const analyticsSupported = await isSupported();

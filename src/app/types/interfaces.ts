@@ -54,4 +54,19 @@ export interface CollaborationSession {
   sessionId: string;
   participants: string[];
   code: string;
+}
+
+export interface Theme {
+  id: string;
+  name: string;
+  background: string;
+  text: string;
+  primary: string;
+  secondary: string;
+  gradientFrom?: string;
+  gradientVia?: string;
+  gradientTo?: string;
+  preview?: string;
+  description?: string;
+  price?: number;
 } 
