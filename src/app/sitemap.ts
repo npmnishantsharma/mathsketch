@@ -6,7 +6,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const quizSnapshot = await getDocs(collection(db, 'quizzes'))
   
   const quizUrls = quizSnapshot.docs.map(quiz => ({
-    url: `https://mathsketch.nishantapps.in/quiestion/${quiz.id}`,
+    url: `https://mathsketch.nishantapps.in/question/${quiz.id}`,
     lastModified: new Date(),
     changeFrequency: 'daily' as const,
     priority: 0.7,
