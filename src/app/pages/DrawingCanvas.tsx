@@ -234,7 +234,34 @@ const getTailwindColor = (className: string) => {
     'purple-600': '#9333EA',
     'indigo-700': '#4338CA',
     'blue-900': '#1E3A8A',
-    // ... (add all color mappings from PreviewModal)
+    'orange-500': '#F97316',
+    'pink-500': '#EC4899',
+    'purple-500': '#A855F7',
+    'cyan-400': '#22D3EE',
+    'blue-500': '#3B82F6',
+    'blue-600': '#2563EB',
+    'red-900': '#7f1d1d',
+    'red-800': '#991b1b',
+    'gray-900': '#111827',
+    'purple-900': '#581c87',
+    'green-900': '#14532d',
+    'green-800': '#166534',
+    'pink-700': '#be185d',
+    'yellow-600': '#ca8a04',
+    'yellow-900': '#713f12',
+    'cyan-900': '#164e63',
+    'blue-950': '#172554',
+    'slate-900': '#0f172a',
+    'red-950': '#450a0a',
+    'teal-900': '#134e4a',
+    'purple-800': '#6b21a8',
+    'indigo-900': '#312e81',
+    'violet-950': '#2e1065',
+    'orange-900': '#7c2d12',
+    'gray-950': '#030712',
+    'green-950': '#052e16',
+    'emerald-900': '#064e3b',
+    'slate-950': '#020617'
   };
 
   const colorKey = className.replace('from-', '')
@@ -252,7 +279,7 @@ export default function DrawingCanvas({
   const router = useRouter();  // Initialize router
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
-  const [color, setColor] = useState('#FFFF'); // Initialize with default theme's text color
+  const [color, setColor] = useState('#FFFF'); // Default color
   const [lineWidth, setLineWidth] = useState(5)
   const [tool, setTool] = useState<'brush' | 'eraser' | 'text' | 'shape'>('brush')
   const [showToolbar, setShowToolbar] = useState(true)
@@ -406,61 +433,64 @@ export default function DrawingCanvas({
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (userProfile?.uid) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', userProfile.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            if ('uid' in userData && 'email' in userData) {  // Basic validation
-              setUserDbData(userData as UserData);
+        if (userProfile?.uid) {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', userProfile.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    if ('uid' in userData && 'email' in userData) {  // Basic validation
+                        setUserDbData(userData as UserData);
+                        // Set points from user data
+                        setPoints(userData.points || 0); // Fetch points from the database
+                    }
+
+                    // Combine all themes: default, custom, and purchased
+                    let allThemes = [...defaultThemes];
+
+                    // Add custom themes if they exist
+                    if (userData.customThemes) {
+                        allThemes = [...allThemes, ...userData.customThemes];
+                    }
+
+                    // Add purchased themes if they exist
+                    if (userData.purchasedThemes) {
+                        const purchasedThemes = userData.purchasedThemes;
+                        // Filter out any duplicates
+                        const newThemes = purchasedThemes.filter(
+                            (purchasedTheme: Theme) => 
+                                !allThemes.some(theme => theme.id === purchasedTheme.id)
+                        );
+                        allThemes = [...allThemes, ...newThemes];
+                    }
+
+                    // Set all themes
+                    setCustomThemes(allThemes);
+
+                    // Set current theme if it exists
+                    if (userData.currentTheme) {
+                        setCurrentTheme(userData.currentTheme);
+                        setColor(userData.currentTheme.text);
+                    }
+                } else {
+                    // Initialize with default theme if user doc doesn't exist
+                    await setDoc(doc(db, 'users', userProfile.uid), {
+                        currentTheme: defaultThemes[0],
+                        customThemes: [],
+                        purchasedThemes: [],
+                        points: 0, // Initialize points
+                        lastUpdated: serverTimestamp()
+                    });
+                    setCurrentTheme(defaultThemes[0]);
+                    setColor(defaultThemes[0].text);
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
             }
-
-            // Combine all themes: default, custom, and purchased
-            let allThemes = [...defaultThemes];
-
-            // Add custom themes if they exist
-            if (userData.customThemes) {
-              allThemes = [...allThemes, ...userData.customThemes];
-            }
-
-            // Add purchased themes if they exist
-            if (userData.purchasedThemes) {
-              const purchasedThemes = userData.purchasedThemes;
-              // Filter out any duplicates
-              const newThemes = purchasedThemes.filter(
-                (purchasedTheme: Theme) => 
-                  !allThemes.some(theme => theme.id === purchasedTheme.id)
-              );
-              allThemes = [...allThemes, ...newThemes];
-            }
-
-            // Set all themes
-            setCustomThemes(allThemes);
-
-            // Set current theme if it exists
-            if (userData.currentTheme) {
-              setCurrentTheme(userData.currentTheme);
-              setColor(userData.currentTheme.text);
-            }
-          } else {
-            // Initialize with default theme if user doc doesn't exist
-            await setDoc(doc(db, 'users', userProfile.uid), {
-              currentTheme: defaultThemes[0],
-              customThemes: [],
-              purchasedThemes: [],
-              lastUpdated: serverTimestamp()
-            });
-            setCurrentTheme(defaultThemes[0]);
-            setColor(defaultThemes[0].text);
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
         }
-      }
     };
 
     fetchUserData();
-  }, [userProfile?.uid]);
+}, [userProfile?.uid]);
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -479,7 +509,8 @@ export default function DrawingCanvas({
 
         // Reapply gradient or background
         if (currentTheme.gradientFrom && currentTheme.gradientTo) {
-          console.log("gradient")
+          console.log(currentTheme)
+
           const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
           const fromColor = getTailwindColor(currentTheme.gradientFrom.replace('from-', ''));
           const viaColor = currentTheme.gradientVia ? getTailwindColor(currentTheme.gradientVia.replace('via-', '')) : null;
@@ -675,6 +706,13 @@ export default function DrawingCanvas({
     const canvas = canvasRef.current;
     if (!canvas || !isDrawing) return;
 
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    // Set the stroke style to the current color
+    context.strokeStyle = color; // Use the updated color
+    context.fillStyle = color; // Use the updated color
+
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
@@ -688,17 +726,6 @@ export default function DrawingCanvas({
       (event.clientY - rect.top) * scaleY
     );
 
-    const context = canvas.getContext('2d');
-    if (!context) return;
-
-    if (tool === 'eraser') {
-      context.globalCompositeOperation = 'destination-out';
-    } else {
-      context.globalCompositeOperation = 'source-over';
-      context.strokeStyle = color;
-      context.fillStyle = color;
-    }
-    
     context.lineWidth = lineWidth;
     context.lineCap = 'round';
     context.lineJoin = 'round';
@@ -878,6 +905,9 @@ export default function DrawingCanvas({
       });
     }
   }
+  const handleColorChange = (newColor: string) => {
+    setColor(newColor);
+};
 
   const handleChatOpen = () => {
     setShowChat(true);
@@ -1093,8 +1123,24 @@ Remember to:
         console.error('Error saving theme to database:', error);
       }
     } else {
-      // Fallback to localStorage for non-logged in users
       saveTheme(theme, customThemes);
+    }
+
+    // Apply gradient background if defined
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (context && canvas) {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      if (theme.gradientFrom && theme.gradientTo) {
+        const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, getTailwindColor(theme.gradientFrom));
+        gradient.addColorStop(1, getTailwindColor(theme.gradientTo));
+        context.fillStyle = gradient;
+      } else {
+        context.fillStyle = theme.background;
+      }
+      context.fillRect(0, 0, canvas.width, canvas.height);
     }
   };
 
@@ -1585,7 +1631,6 @@ Remember to:
       }
     }
   };
-
   // Update the handleAnswerSelect function
   const handleAnswerSelect = async (answer: string) => {
     if (quizState.isAnswered) return;
@@ -2186,7 +2231,7 @@ Remember to:
                     <input
                       type="color"
                       value={color}
-                      onChange={(e) => setColor(e.target.value)}
+                      onChange={(e) => handleColorChange(e.target.value)}
                       className="w-8 h-8 rounded-full overflow-hidden cursor-pointer"
                     />
                   </TooltipTrigger>
@@ -2265,10 +2310,15 @@ Remember to:
                         key={theme.name} 
                         onSelect={() => handleThemeChange(theme)}
                         className="flex items-center gap-2"
+                        style={{ backgroundColor: 'transparent', color: currentTheme.text }} // Set background to transparent
                       >
                         <div 
                           className="w-4 h-4 rounded-full border border-gray-400"
-                          style={{ backgroundColor: theme.background }}
+                          style={{ 
+                            background: `${theme.background}`, // Provide default colors
+                            border: `1px solid ${currentTheme.primary}`,
+                            color: currentTheme.text 
+                        }}
                         />
                         {theme.name}
                       </DropdownMenuItem>
@@ -2281,7 +2331,11 @@ Remember to:
                       >
                         <div 
                           className="w-4 h-4 rounded-full border border-gray-400"
-                          style={{ backgroundColor: theme.background }}
+                          style={{ 
+                            background: `linear-gradient(to right, ${getTailwindColor(theme.gradientFrom || '#000')}, ${getTailwindColor(theme.gradientTo || '#fff')})`, // Provide default colors
+                            border: `1px solid ${currentTheme.primary}`,
+                            color: currentTheme.text 
+                        }}
                         />
                         {theme.name}
                       </DropdownMenuItem>
@@ -3055,17 +3109,7 @@ Remember to:
         {/* User profile dropdown - single instance */}
         <div className="fixed top-4 right-4 flex items-center gap-4">
           {!userProfile ? (
-            <Button
-              onClick={() => setShowAuthDialog(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full shadow-lg animate-fadeIn"
-              style={{ 
-                backgroundColor: currentTheme.secondary,
-                color: currentTheme.text,
-                border: `1px solid ${currentTheme.primary}`,
-              }}
-            >
-              Sign In
-            </Button>
+            <div></div>
           ) : (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

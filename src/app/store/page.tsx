@@ -249,7 +249,7 @@ export default function StorePage() {
       
       // Update user document with new theme
       await updateDoc(userRef, {
-        coins: userCoins - theme.price,
+        points: userCoins - theme.price,
         themes: arrayUnion(theme.id),
         purchasedThemes: arrayUnion(theme),
         lastUpdated: serverTimestamp()
