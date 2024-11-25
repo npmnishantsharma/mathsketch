@@ -1,6 +1,8 @@
+'use client';
+
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./dialog";
-import { Button } from "./button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/firebase";
 import { sendEmailVerification, createUserWithEmailAndPassword } from "firebase/auth";
 import { toast } from "sonner";
@@ -56,11 +58,12 @@ export function VerificationDialog({ isOpen, onClose }: VerificationDialogProps)
 
 const Signup = () => {
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    // ... existing signup code ...
-
+    
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;

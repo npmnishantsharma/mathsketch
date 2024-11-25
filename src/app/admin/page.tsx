@@ -3,7 +3,6 @@ import { db } from '@/lib/firebase';
 import { collection, getCountFromServer, query, where } from 'firebase/firestore';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import Navbar from '@/components/Navbar';
 
 // Moving getStats outside the component since it's an async function
 async function getStats() {
@@ -93,8 +92,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
-      <Navbar />
-      
       <div className="p-6">
         <motion.h2 
           initial={{ opacity: 0, y: -20 }}

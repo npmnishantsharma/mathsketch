@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { db } from "@/lib/firebase/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 interface QuizQuestion {
   question: string;
@@ -20,10 +22,24 @@ export default function QuestionPage({ params }: { params: { docid: string } }) 
   useEffect(() => {
     const fetchQuestion = async () => {
       try {
-        const response = await fetch(`/api/question/${params.docid}`);
-        if (!response.ok) throw new Error('Failed to fetch question');
-        const data = await response.json();
-        setQuestion(data);
+        // Get the document from Firestore
+        const docRef = doc(db, "quizzes", params.docid);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          throw new Error('Question not found');
+        }
+
+        // Get the document data
+        const questionData = docSnap.data();
+        
+        // Set only necessary fields
+        setQuestion({
+          question: questionData.question,
+          options: questionData.options,
+          explanation: questionData.explanation,
+          isQuiz: questionData.isQuiz,
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong');
       } finally {

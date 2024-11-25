@@ -15,14 +15,26 @@ const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose
     {
       icon: <Paintbrush className="w-5 h-5 text-blue-500" />,
       title: "Smart Drawing Tools",
-      description: "Enhanced brush with pressure sensitivity and smooth line drawing. Multiple brush styles available.",
+      description: "Enhanced brush with pressure sensitivity, smooth line drawing, and gradient support.",
       bgColor: "bg-blue-50 dark:bg-blue-900/20"
     },
     {
       icon: <Brain className="w-5 h-5 text-purple-500" />,
       title: "Advanced AI Analysis",
-      description: "Improved mathematical recognition with step-by-step solutions and detailed explanations.",
+      description: "Improved mathematical recognition with step-by-step solutions and interactive quizzes.",
       bgColor: "bg-purple-50 dark:bg-purple-900/20"
+    },
+    {
+      icon: <Palette className="w-5 h-5 text-emerald-500" />,
+      title: "Enhanced Themes",
+      description: "Create and customize themes with gradients, plus new preset themes to choose from.",
+      bgColor: "bg-emerald-50 dark:bg-emerald-900/20"
+    },
+    {
+      icon: <Share2 className="w-5 h-5 text-indigo-500" />,
+      title: "Real-time Collaboration",
+      description: "Work together in real-time with chat, presence indicators, and shared canvas.",
+      bgColor: "bg-indigo-50 dark:bg-indigo-900/20"
     },
     {
       icon: <Type className="w-5 h-5 text-green-500" />,
@@ -35,12 +47,6 @@ const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose
       title: "Enhanced Math Keyboard",
       description: "Expanded symbol library with custom shortcuts. Quick access to frequently used expressions.",
       bgColor: "bg-pink-50 dark:bg-pink-900/20"
-    },
-    {
-      icon: <Share2 className="w-5 h-5 text-indigo-500" />,
-      title: "Real-time Collaboration",
-      description: "Multi-user editing with chat and presence indicators. Share and solve problems together.",
-      bgColor: "bg-indigo-50 dark:bg-indigo-900/20"
     },
     {
       icon: <Coins className="w-5 h-5 text-yellow-500" />,
@@ -71,12 +77,6 @@ const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose
       title: "Dynamic Shapes",
       description: "Resizable geometric shapes with snapping and alignment guides.",
       bgColor: "bg-violet-50 dark:bg-violet-900/20"
-    },
-    {
-      icon: <Palette className="w-5 h-5 text-emerald-500" />,
-      title: "Custom Themes",
-      description: "Create and share custom themes. Dark mode and high contrast options.",
-      bgColor: "bg-emerald-50 dark:bg-emerald-900/20"
     },
     {
       icon: <Rocket className="w-5 h-5 text-rose-500" />,
@@ -156,20 +156,20 @@ const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose
             </h3>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
               <li className="flex items-center gap-2 bg-white dark:bg-gray-800 p-3 rounded-lg">
-                <Sparkles className="w-4 h-4 text-yellow-500" />
-                <span>Enhanced AI with better math recognition</span>
+                <Palette className="w-4 h-4 text-emerald-500" />
+                <span>New gradient theme support</span>
               </li>
               <li className="flex items-center gap-2 bg-white dark:bg-gray-800 p-3 rounded-lg">
                 <Users className="w-4 h-4 text-blue-500" />
-                <span>Multi-user collaboration improvements</span>
+                <span>Enhanced real-time collaboration</span>
               </li>
               <li className="flex items-center gap-2 bg-white dark:bg-gray-800 p-3 rounded-lg">
-                <Crown className="w-4 h-4 text-purple-500" />
-                <span>New points system and rewards</span>
+                <Sparkles className="w-4 h-4 text-yellow-500" />
+                <span>Improved AI recognition</span>
               </li>
               <li className="flex items-center gap-2 bg-white dark:bg-gray-800 p-3 rounded-lg">
-                <Brain className="w-4 h-4 text-pink-500" />
-                <span>Interactive quizzes with AI feedback</span>
+                <Brain className="w-4 h-4 text-purple-500" />
+                <span>Interactive quizzes with rewards</span>
               </li>
             </ul>
           </div>
@@ -181,16 +181,16 @@ const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
               <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                <p className="text-sm">Use the AI chat for step-by-step guidance</p>
+                <p className="text-sm">Try the new gradient themes for better visibility</p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                <p className="text-sm">Complete quizzes to earn bonus points</p>
+                <p className="text-sm">Use real-time collaboration for group study</p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                <p className="text-sm">Share your workspace for live collaboration</p>
+                <p className="text-sm">Earn points through quizzes and helping others</p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                <p className="text-sm">Try different themes for better visibility</p>
+                <p className="text-sm">Customize themes with your favorite gradients</p>
               </div>
             </div>
           </div>

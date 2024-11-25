@@ -180,7 +180,7 @@ const QuestionBubbles: React.FC<{
   );
 };
 
-const CURRENT_UPDATE_CODE = "1.5.0-vanillaBeta"; // Change this when you want to force show the introduction
+const CURRENT_UPDATE_CODE = "1.5.0-oreo"; // Change this when you want to force show the introduction
 
 const UpdateBadge: React.FC<{ type: 'new' | 'updated' }> = ({ type }) => (
   <span 
@@ -479,6 +479,7 @@ export default function DrawingCanvas({
 
         // Reapply gradient or background
         if (currentTheme.gradientFrom && currentTheme.gradientTo) {
+          console.log("gradient")
           const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
           const fromColor = getTailwindColor(currentTheme.gradientFrom.replace('from-', ''));
           const viaColor = currentTheme.gradientVia ? getTailwindColor(currentTheme.gradientVia.replace('via-', '')) : null;
