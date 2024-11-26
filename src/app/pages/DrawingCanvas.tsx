@@ -279,7 +279,7 @@ export default function DrawingCanvas({
   const router = useRouter();  // Initialize router
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
-  const [color, setColor] = useState('#FFFF'); // Default color
+  const [color, setColor] = useState(''); // Default color
   const [lineWidth, setLineWidth] = useState(5)
   const [tool, setTool] = useState<'brush' | 'eraser' | 'text' | 'shape'>('brush')
   const [showToolbar, setShowToolbar] = useState(true)
@@ -906,7 +906,9 @@ export default function DrawingCanvas({
     }
   }
   const handleColorChange = (newColor: string) => {
-    setColor(newColor);
+    setColor(newColor); // This should update the color state
+    console.log(newColor);
+    console.log(color);
 };
 
   const handleChatOpen = () => {
@@ -1110,7 +1112,7 @@ Remember to:
 
   const handleThemeChange = async (theme: Theme) => {
     setCurrentTheme(theme);
-    setColor(theme.text);
+    setColor(theme.text || theme.primary);
 
     if (userProfile?.uid) {
       try {

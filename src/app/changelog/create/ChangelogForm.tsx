@@ -38,13 +38,15 @@ export default function ChangelogForm() {
 
     try {
       const file = e.target.files[0];
-      const storageRef = ref(storage, `changelog/features/${Date.now()}-${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      const reader = new FileReader();
       
-      const newFeatures = [...features];
-      newFeatures[index] = { ...newFeatures[index], image: url };
-      setFeatures(newFeatures);
+      reader.onloadend = () => {
+        const newFeatures = [...features];
+        newFeatures[index] = { ...newFeatures[index], image: reader.result as string };
+        setFeatures(newFeatures);
+      };
+      
+      reader.readAsDataURL(file);
     } catch (error) {
       console.error('Upload failed:', error);
       alert('Failed to upload image');
@@ -65,10 +67,13 @@ export default function ChangelogForm() {
 
     try {
       const file = e.target.files[0];
-      const storageRef = ref(storage, `changelog/${Date.now()}-${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      setImages([...images, url]);
+      const reader = new FileReader();
+      
+      reader.onloadend = () => {
+        setImages([...images, reader.result as string]);
+      };
+      
+      reader.readAsDataURL(file);
     } catch (error) {
       console.error('Upload failed:', error);
       alert('Failed to upload image');

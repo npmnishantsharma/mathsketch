@@ -13,7 +13,7 @@ export default async function ChangelogPage() {
   const changelogs = await getChangelogs();
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       <div className="container mx-auto px-4">
         <div className="flex relative">
           {/* Hero Section - Left Side Fixed */}
@@ -46,12 +46,12 @@ export default async function ChangelogPage() {
           <div className="w-2/3 py-12 pl-12 ml-[33.333333%]">
             <div className="relative">
               {/* Timeline Line */}
-              <div className="absolute left-0 top-0 bottom-0 w-px bg-zinc-800" />
+              <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-blue-400 to-purple-600" />
 
               {changelogs.map((entry) => (
                 <div key={entry.id} className="mb-16 relative pl-12">
-                  {/* Timeline Dot */}
-                  <div className="absolute left-[-5px] top-3 w-[10px] h-[10px] rounded-full bg-blue-400 ring-4 ring-zinc-950" />
+                  {/* Timeline Dot - Add animation for the current version */}
+                  <div className={`absolute left-[-5px] top-3 w-[10px] h-[10px] rounded-full ring-4 ring-zinc-950 ${entry.isCurrent ? 'dot-animation' : 'bg-blue-400'}`} />
                   
                   {/* Date Label */}
                   <div className="absolute left-[-120px] top-1 text-sm text-zinc-500">
@@ -73,7 +73,14 @@ export default async function ChangelogPage() {
                     {entry.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-center gap-2 text-zinc-300">
                         <span className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
-                        {feature.text}
+                        <div className="flex flex-col">
+                          {feature.text}
+                          {feature.image && (
+                          <div className="mt-2">
+                            <img src={feature.image} className="rounded-[20px]" width={900} height={900} />
+                            </div>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>

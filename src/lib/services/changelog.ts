@@ -13,6 +13,7 @@ export interface ChangelogEntry {
     image?: string;
   }[];
   images?: string[];
+  isCurrent?: boolean
 }
 
 export async function getChangelogs(): Promise<ChangelogEntry[]> {
