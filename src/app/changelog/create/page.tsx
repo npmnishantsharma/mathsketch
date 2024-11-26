@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import ChangelogForm from './ChangelogForm';
 import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../lib/auth';
 
 export const metadata: Metadata = {
@@ -10,7 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default async function CreateChangelogPage() {
-  const session = await getServerSession(authOptions);
   
   // Protect the page - only allow admins
   // if (!session?.user?.email || !session.user.isAdmin) {
