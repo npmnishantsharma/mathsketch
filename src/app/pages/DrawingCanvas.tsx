@@ -277,7 +277,7 @@ export default function DrawingCanvas({
   sessionId
 }: DrawingCanvasProps) {
   const router = useRouter();  // Initialize router
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null); // Define canvasRef
   const [isDrawing, setIsDrawing] = useState(false)
   const [color, setColor] = useState(''); // Default color
   const [lineWidth, setLineWidth] = useState(5)
@@ -375,6 +375,7 @@ export default function DrawingCanvas({
   // Add new state
   const [showCollabChat, setShowCollabChat] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false); // State to track drag over status
 
   useEffect(() => {
     const initializeAnalytics = async () => {
@@ -1491,7 +1492,7 @@ Remember to:
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_AUTH_TOKEN}`,
+          'Authorization': `Bearer xK9p#mN2$vL5hQ8wxK9p#mN2$vL5hQ8w`,
         },
         body: JSON.stringify({ image: imageDataUrl, dict_of_vars: dictOfVars }),
       });
@@ -2050,6 +2051,61 @@ Remember to:
     setShowIntroduction(true)
   };
 
+  const handleDragOver = (event: React.DragEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
+    setIsDragOver(true); // Set drag over state to true
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false); // Reset drag over state when leaving
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
+    setIsDragOver(false); // Reset drag over state on drop
+    const file = event.dataTransfer.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageDataUrl = reader.result as string;
+        loadCanvasState(imageDataUrl); // Use loadCanvasState to draw the image on the canvas
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageDataUrl = reader.result as string;
+        loadCanvasState(imageDataUrl); // Use loadCanvasState to draw the image on the canvas
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const speakText = (text: string) => {
+    if (text.trim() === '') {
+      console.warn('No text to speak');
+      return; // Prevent speaking if there's no text
+    }
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.onstart = () => {
+      console.log('Speech started');
+    };
+    utterance.onend = () => {
+      console.log('Speech ended');
+    };
+    utterance.onerror = (event) => {
+      console.error('Speech synthesis error:', event.error);
+    };
+    
+    window.speechSynthesis.speak(utterance);
+  };
+
   // Update the canvas event handlers
   return (
     <TooltipProvider>
@@ -2128,13 +2184,22 @@ Remember to:
               onTouchEnd={stopDrawing}
               onTouchMove={draw}
               onClick={handleCanvasClick}
-              className="touch-none w-full h-full absolute top-0 left-0"
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              className={`touch-none w-full h-full absolute top-0 left-0 ${isDragOver ? 'border-4 border-dashed border-blue-500' : ''}`}
               style={{ 
                 display: 'block',
                 cursor: tool === 'text' ? 'text' : 'crosshair',  // Change cursor to crosshair
                 touchAction: 'none'  // Prevent default touch behaviors
               }}
-            />
+            >
+              {isDragOver && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                  <p className="text-white">Drop your image here!</p>
+                </div>
+              )}
+            </canvas>
             
             {textBoxes.map(textBox => (
               <div
@@ -2208,6 +2273,7 @@ Remember to:
                 )}
               </div>
             ))}
+
 
             {currentQuestions.length > 0 && (
               <QuestionBubbles
@@ -2987,7 +3053,7 @@ Remember to:
                 <DialogHeader>
                   <DialogTitle>Camera</DialogTitle>
                   <DialogDescription style={{ color: currentTheme.secondary }}>
-                    Take a picture to add to your canvas
+                    Take a picture to add to your canvas or upload an image.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4">
@@ -3029,6 +3095,19 @@ Remember to:
                         Capture
                       </Button>
                     </div>
+                  </div>
+                  {/* Button to upload images */}
+                  <div className="flex justify-center">
+                    <Button onClick={() => document.getElementById('imageUpload')?.click()} style={{ backgroundColor: currentTheme.primary, color: currentTheme.text }}>
+                      Upload Image
+                    </Button>
+                    <input
+                      id="imageUpload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      style={{ display: 'none' }} // Hide the file input
+                    />
                   </div>
                 </div>
               </DialogContent>
@@ -3307,4 +3386,17 @@ const collaboratorsToRecord = (collaborators: CollaboratorData[]): Record<string
     acc[collaborator.id] = participant;
     return acc;
   }, {} as Record<string, Participant>);
+};
+
+// Update the loadCanvasState function to handle image data URLs
+const loadCanvasState = (dataUrl: string) => {
+  const canvas = canvasRef.current;
+  const context = canvas?.getContext('2d');
+  if (!canvas || !context) return;
+
+  const img = new Image();
+  img.onload = () => {
+    context.drawImage(img, 0, 0); // Draw the image at (0, 0) or adjust as needed
+  };
+  img.src = dataUrl;
 };
