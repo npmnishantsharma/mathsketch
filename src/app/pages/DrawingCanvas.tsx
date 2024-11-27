@@ -374,6 +374,7 @@ export default function DrawingCanvas({
   const [lastY, setLastY] = useState<number | null>(null);
   // Add new state
   const [showCollabChat, setShowCollabChat] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
 
   useEffect(() => {
     const initializeAnalytics = async () => {
@@ -493,54 +494,46 @@ export default function DrawingCanvas({
 }, [userProfile?.uid]);
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    const context = canvas?.getContext('2d')
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
 
     const resizeCanvas = () => {
-      if (canvas && context) {
-        const tempCanvas = document.createElement('canvas')
-        const tempContext = tempCanvas.getContext('2d')
-        tempCanvas.width = canvas.width
-        tempCanvas.height = canvas.height
-        tempContext?.drawImage(canvas, 0, 0)
+        if (canvas && context) {
+            // Clear the canvas before resizing
+            context.clearRect(0, 0, canvas.width, canvas.height);
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+            // Resize the canvas
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
 
-        // Reapply gradient or background
-        if (currentTheme.gradientFrom && currentTheme.gradientTo) {
-          console.log(currentTheme)
+            // Reapply gradient or background
+            if (currentTheme.gradientFrom && currentTheme.gradientTo) {
+                const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+                const fromColor = getTailwindColor(currentTheme.gradientFrom.replace('from-', ''));
+                const viaColor = currentTheme.gradientVia ? getTailwindColor(currentTheme.gradientVia.replace('via-', '')) : null;
+                const toColor = getTailwindColor(currentTheme.gradientTo.replace('to-', ''));
 
-          const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
-          const fromColor = getTailwindColor(currentTheme.gradientFrom.replace('from-', ''));
-          const viaColor = currentTheme.gradientVia ? getTailwindColor(currentTheme.gradientVia.replace('via-', '')) : null;
-          const toColor = getTailwindColor(currentTheme.gradientTo.replace('to-', ''));
+                gradient.addColorStop(0, fromColor);
+                if (viaColor) {
+                    gradient.addColorStop(0.5, viaColor);
+                }
+                gradient.addColorStop(1, toColor);
+                context.fillStyle = gradient;
+            } else {
+                context.fillStyle = currentTheme.background;
+            }
 
-          gradient.addColorStop(0, fromColor);
-          if (viaColor) {
-            gradient.addColorStop(0.5, viaColor);
-          }
-          gradient.addColorStop(1, toColor);
-          context.fillStyle = gradient;
-        } else {
-          context.fillStyle = currentTheme.background;
+            context.fillRect(0, 0, canvas.width, canvas.height);
         }
-        
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(tempCanvas, 0, 0);
+    };
 
-        context.lineCap = 'round'
-        context.lineJoin = 'round'
-      }
-    }
-
-    resizeCanvas()
-    window.addEventListener('resize', resizeCanvas)
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas)
-    }
-  }, [currentTheme.background])
+        window.removeEventListener('resize', resizeCanvas);
+    };
+}, [currentTheme]);
 
   // Add this new useEffect to reinitialize canvas context when auth state or theme changes
   useEffect(() => {
@@ -759,36 +752,52 @@ export default function DrawingCanvas({
     }
   };
 
+  const applyGradient = (context: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+    if (currentTheme.gradientFrom && currentTheme.gradientTo) {
+        const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+        const fromColor = getTailwindColor(currentTheme.gradientFrom.replace('from-', ''));
+        const viaColor = currentTheme.gradientVia ? getTailwindColor(currentTheme.gradientVia.replace('via-', '')) : null;
+        const toColor = getTailwindColor(currentTheme.gradientTo.replace('to-', ''));
+
+        gradient.addColorStop(0, fromColor);
+        if (viaColor) {
+            gradient.addColorStop(0.5, viaColor);
+        }
+        gradient.addColorStop(1, toColor);
+        context.fillStyle = gradient;
+    } else {
+        context.fillStyle = currentTheme.background; // Fallback to solid color
+    }
+
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  };
+
+  // Add this useEffect to apply the gradient on loading
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+
+    if (context && canvas) {
+        // Set canvas dimensions
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Apply gradient on loading
+        applyGradient(context, canvas);
+    }
+  }, [currentTheme]);
+
+  // Function to clear the canvas and reapply the gradient
   const clearCanvas = () => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext('2d');
-    if (context && canvas) {
-      context.fillStyle = currentTheme.background;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    setShowResetDialog(false);
-    setDictOfVars({});
-    setTextBoxes([]);
-    setSelectedTextBox(null);
-    setIsEditingText(false);
-    
-    // Sync clear action in collaboration mode
-    if (isCollaboration && sessionId && userProfile?.uid) {
-      try {
-        const stateRef = ref(dbRef.current, `sessions/${sessionId}/canvasState`);
-        set(stateRef, {
-          data: captureCanvasState(),
-          timestamp: new Date().toISOString(),
-          userId: userProfile.uid,
-          action: 'clear'
-        });
-      } catch (error) {
-        console.error('Error syncing canvas clear:', error);
-      }
-    }
 
-    if (analytics) {
-      logEvent(analytics, 'canvas_reset');
+    if (context && canvas) {
+        // Clear the canvas
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Reapply the gradient
+        applyGradient(context, canvas);
     }
   };
 
@@ -1192,9 +1201,6 @@ Remember to:
     }
   }, [showIntroduction]);
 
-  const handleHelpClick = () => {
-    setShowIntroduction(true)
-  }
 
   const handleCanvasClick = (e?: React.MouseEvent) => {
     // Handle text box deselection
@@ -2025,6 +2031,25 @@ Remember to:
     };
   }, [isCollaboration, sessionId, userProfile?.uid]);
 
+  // Add a resize event listener to detect small screens
+  useEffect(() => {
+    const handleResize = () => {
+        setIsSmallScreen(window.innerWidth < 768); // Adjust the width as needed
+    };
+
+    handleResize(); // Check on mount
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+        window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Function to handle help button click
+  const handleHelpClick = () => {
+    setShowIntroduction(true)
+  };
+
   // Update the canvas event handlers
   return (
     <TooltipProvider>
@@ -2458,6 +2483,22 @@ Remember to:
                     <p>Open collaboration chat</p>
                   </TooltipContent>
                 </Tooltip>
+
+                {/* Add Help Button for small screens */}
+                {isSmallScreen && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        onClick={handleHelpClick}
+                        style={{ backgroundColor: currentTheme.secondary, color: currentTheme.text }}
+                      >
+                        <HelpCircle className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                  </Tooltip>
+                )}
               </div>
             </div>
             <Tooltip>
@@ -2488,7 +2529,7 @@ Remember to:
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel style={{ backgroundColor: currentTheme.secondary, color: currentTheme.text }}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={clearCanvas} style={{ backgroundColor: currentTheme.primary, color: currentTheme.text }}>Reset</AlertDialogAction>
+                  <AlertDialogAction onClick={clearCanvas} style={{ backgroundColor: currentTheme.secondary, color: currentTheme.text }}>Reset</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
