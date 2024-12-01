@@ -71,16 +71,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate cache key based on input
-    const cacheKey = `gen-auto-${JSON.stringify({ image })}`;
-    
-    // Try to get cached response
-    const cache = await caches.open('mathsketch-api');
-    const cachedResponse = await cache.match(cacheKey);
-    
-    if (cachedResponse) {
-      return cachedResponse;
-    }
+    // Generate cache key based on inpu
 
     const answer = await solveMathEquation(image);
 
