@@ -34,6 +34,7 @@
     }
   },
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-dialog": "^1.1.2",
@@ -53,6 +54,7 @@
     "class-variance-authority": "^0.7.0",
     "cloudinary": "^2.5.1",
     "clsx": "^2.1.1",
+    "crypto-js": "^4.2.0",
     "dotenv": "^16.4.5",
     "electron-devtools-installer": "^3.2.0",
     "electron-is-dev": "^2.0.0",

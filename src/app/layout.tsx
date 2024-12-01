@@ -47,6 +47,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link 
+          href="https://fonts.cdnfonts.com/css/noteworthy" 
+          rel="stylesheet"
+        />
+      </head>
       <body>
         <main>
           <AuthProvider>

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Paintbrush, Eraser, Type, Sparkles, MessageCircle, Camera, Users, Shapes, Share2, Keyboard, Palette, HelpCircle, Brain, Coins, Crown, Rocket } from "lucide-react"
+import { Paintbrush, Eraser, Type, Sparkles, MessageCircle, Camera, Users, Shapes, Share2, Keyboard, Palette, HelpCircle, Brain, Coins, Crown, Rocket, Calculator, History } from "lucide-react"
 
 interface CanvasIntroductionProps {
   isOpen: boolean;
@@ -83,6 +83,18 @@ const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose
       title: "Performance Boost",
       description: "Optimized drawing engine with smoother animations and faster responses.",
       bgColor: "bg-rose-50 dark:bg-rose-900/20"
+    },
+    {
+      icon: <Calculator className="w-5 h-5 text-teal-500" />,
+      title: "Auto Analysis",
+      description: "Automatic problem detection and step-by-step solution generation.",
+      bgColor: "bg-teal-50 dark:bg-teal-900/20"
+    },
+    {
+      icon: <History className="w-5 h-5 text-amber-500" />,
+      title: "Session History",
+      description: "Access and restore previous work sessions with full edit history.",
+      bgColor: "bg-amber-50 dark:bg-amber-900/20"
     }
   ];
 
@@ -94,7 +106,11 @@ const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose
     { key: "Space", description: "Toggle toolbar" },
     { key: "Delete", description: "Remove selected item" },
     { key: "Ctrl + S", description: "Save session" },
-    { key: "Ctrl + C", description: "Copy selection" }
+    { key: "Ctrl + C", description: "Copy selection" },
+    { key: "Ctrl + /", description: "Toggle AI assistant" },
+    { key: "Alt + A", description: "Auto analyze" },
+    { key: "Ctrl + H", description: "View history" },
+    { key: "Alt + S", description: "Share canvas" }
   ];
 
   return (
@@ -149,6 +165,23 @@ const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose
             </div>
           </div>
 
+          {/* Getting Started */}
+          <div className="p-4 rounded-lg bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20">
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <span className="text-xl">🎯</span> Getting Started
+            </h3>
+            <div className="grid grid-cols-1 gap-3 mt-4">
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                <ol className="list-decimal list-inside space-y-2">
+                  <li>Draw or write your mathematical problem on the canvas</li>
+                  <li>Use Alt + A or click the analyze button for automatic solutions</li>
+                  <li>Interact with the AI assistant for detailed explanations</li>
+                  <li>Save your work and share with others for collaboration</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
           {/* What's New Section */}
           <div className="p-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
             <h3 className="font-semibold mb-2 flex items-center gap-2">
@@ -170,6 +203,14 @@ const CanvasIntroduction: React.FC<CanvasIntroductionProps> = ({ isOpen, onClose
               <li className="flex items-center gap-2 bg-white dark:bg-gray-800 p-3 rounded-lg">
                 <Brain className="w-4 h-4 text-purple-500" />
                 <span>Interactive quizzes with rewards</span>
+              </li>
+              <li className="flex items-center gap-2 bg-white dark:bg-gray-800 p-3 rounded-lg">
+                <Calculator className="w-4 h-4 text-teal-500" />
+                <span>New auto-analysis feature</span>
+              </li>
+              <li className="flex items-center gap-2 bg-white dark:bg-gray-800 p-3 rounded-lg">
+                <History className="w-4 h-4 text-amber-500" />
+                <span>Session history and restoration</span>
               </li>
             </ul>
           </div>

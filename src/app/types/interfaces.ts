@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export interface FontStyle {
   name: string;
   value: string;
@@ -41,6 +43,7 @@ export interface UserProfile {
   photoURL: string | null;
   provider: 'email' | 'google';
   uid: string;
+  lastUpdated?: Timestamp;
 }
 
 export interface Participant {

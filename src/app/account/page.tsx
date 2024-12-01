@@ -26,6 +26,7 @@ import {
 } from "firebase/auth";
 import { toast } from "sonner";
 import { RequireVerification } from '@/components/require-verification';
+import CryptoJS from 'crypto-js'; // Import the encryption library
 
 export default function AccountPage() {
   const router = useRouter();
@@ -45,17 +46,23 @@ export default function AccountPage() {
   const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
   const [isLinkingAccount, setIsLinkingAccount] = useState(false);
   const googleProvider = new GoogleAuthProvider();
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [showUserId, setShowUserId] = useState(false);
+  const [isUserIdFeatureEnabled, setUserIdFeatureEnabled] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        console.log(user)
         const isGoogleUser = user.providerData[0]?.providerId === 'google.com';
         const profile: UserProfile = {
           displayName: user.displayName,
           email: user.email,
           photoURL: user.photoURL,
           provider: isGoogleUser ? 'google' : 'email',
-          uid: user.uid
+          uid: user.uid,
         };
         setUserProfile(profile);
         setDisplayName(user.displayName || '');
@@ -75,6 +82,8 @@ export default function AccountPage() {
           if (userData.currentTheme) {
             setCurrentTheme(userData.currentTheme);
           }
+          profile.lastUpdated = userData.lastUpdated;
+          console.log(profile)
         }
       } else {
         router.push('/');
@@ -112,13 +121,17 @@ export default function AccountPage() {
         imageUrl = await getDownloadURL(imageRef);
       }
 
+      // Encrypt the Gemini API Key before saving
+      const encryptedApiKey = CryptoJS.AES.encrypt(geminiApiKey, process.env.NEXT_ENCRYPT_KEY || 'cantsay').toString();
+
       // Update Firestore document
       const userRef = doc(db, 'users', userProfile.uid);
       await updateDoc(userRef, {
         displayName,
         bio,
         profileImage: imageUrl,
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
+        geminiApiKey: encryptedApiKey // Save the encrypted key
       });
 
       // Update auth profile if name changed
@@ -183,6 +196,21 @@ export default function AccountPage() {
       console.error('Error unlinking provider:', error);
       toast.error('Failed to unlink provider. Please try again.');
     }
+  };
+
+  // Decrypt the API Key for display
+  const decryptedApiKey = (key: string) => {
+    const bytes = CryptoJS.AES.decrypt(key, process.env.NEXT_ENCRYPT_KEY || 'cant say');
+    return bytes.toString(CryptoJS.enc.Utf8);
+  };
+
+  // Function to handle long press
+  const handleLongPressStart = () => {
+    setShowUserId(true);
+  };
+
+  const handleLongPressEnd = () => {
+    setShowUserId(false);
   };
 
   if (!userProfile) {
@@ -253,12 +281,26 @@ export default function AccountPage() {
                         style={{ 
                           '--tw-ring-color': currentTheme.primary,
                           '--tw-ring-offset-color': currentTheme.background 
-                        } as React.CSSProperties}>
+                        } as React.CSSProperties}
+                        onMouseDown={handleLongPressStart}
+                        onMouseUp={handleLongPressEnd}
+                        onMouseLeave={handleLongPressEnd}
+                        id="profile-pic"
+                      >
                         <AvatarImage src={profileImage || ''} />
                         <AvatarFallback style={{ backgroundColor: currentTheme.secondary }}>
                           {displayName?.charAt(0) || '?'}
                         </AvatarFallback>
                       </Avatar>
+                      <div className="text-center">
+                        <p className="text-lg font-semibold">{userProfile?.uid}</p>
+                        {isUserIdFeatureEnabled && showUserId && (
+                          <p className="text-sm text-gray-500" id="user-id-display">User ID: {userProfile?.uid}</p>
+                        )}
+                        <p className="text-sm text-gray-500">
+                          Last Updated: {userProfile?.lastUpdated ? new Date(userProfile.lastUpdated.seconds * 1000).toLocaleString() : 'N/A'}
+                        </p>
+                      </div>
                       <div>
                         <Input
                           type="file"
@@ -327,6 +369,62 @@ export default function AccountPage() {
                         />
                       </div>
                     </RequireVerification>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <Label htmlFor="geminiApiKey">Gemini API Key</Label>
+                        <button 
+                          onClick={() => setShowModal(true)} 
+                          className="ml-2 text-gray-500 hover:text-gray-700"
+                          aria-label="More information about Gemini API Key"
+                        >
+                          ?
+                        </button>
+                      </div>
+                      <div className="flex items-center">
+                        <Input
+                          id="geminiApiKey"
+                          type={showApiKey ? 'text' : 'password'} // Change input type based on visibility
+                          onChange={(e) => setGeminiApiKey(e.target.value)} // Allow editing of the API key
+                          className="transition-all focus:scale-[1.02]"
+                          style={{ 
+                            backgroundColor: `${currentTheme.secondary}30`,
+                            color: currentTheme.text 
+                          }}
+                        />
+                        <button 
+                          onClick={() => setShowApiKey(!showApiKey)} // Toggle visibility
+                          className="ml-2 text-gray-500 hover:text-gray-700"
+                          aria-label={showApiKey ? "Hide API Key" : "Show API Key"}
+                        >
+                          {showApiKey ? '👁️' : '👁️‍🗨️'} {/* Eye icon to show/hide */}
+                        </button>
+                      </div>
+                    </div>
+
+                    {showModal && (
+                      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                        <div className="bg-white p-4 rounded-lg shadow-lg">
+                          <h2 className="text-lg font-semibold">Gemini API Key Information</h2>
+                          <p className="mb-4">Here is how to obtain your Gemini API Key:</p>
+                          <iframe 
+                            width="560" 
+                            height="315" 
+                            src="https://www.youtube.com/embed/YOUR_VIDEO_ID" 
+                            title="YouTube video player" 
+                            frameBorder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowFullScreen
+                          ></iframe>
+                          <button 
+                            onClick={() => setShowModal(false)} 
+                            className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="space-y-4 mt-6 pt-6 border-t">
                       <div className="flex flex-col gap-2">
