@@ -123,7 +123,6 @@ export async function POST(req: NextRequest) {
         message: "Analysis complete",
         data: validatedAnswers
       });
-      cache.put(cacheKey, newResponse.clone());
       
       return newResponse;
 
