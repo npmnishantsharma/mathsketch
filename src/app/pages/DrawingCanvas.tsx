@@ -389,8 +389,9 @@ export default function DrawingCanvas({
   isCollaboration = false,
   sessionId,
 }: DrawingCanvasProps) {
+  // All hooks go here at the top of the component
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState(""); // Default color
   const [lineWidth, setLineWidth] = useState(5);
@@ -529,6 +530,20 @@ export default function DrawingCanvas({
     };
 
     initializeAnalytics();
+  }, []);
+  useEffect(() => {
+    return () => {
+      // Cleanup old caches on component unmount
+      if ('caches' in window) {
+        caches.keys().then(cacheNames => {
+          cacheNames.forEach(cacheName => {
+            if (cacheName.startsWith('mathsketch-cache-') && cacheName !== CACHE_NAME) {
+              caches.delete(cacheName);
+            }
+          });
+        });
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -4285,18 +4300,5 @@ const collaboratorsToRecord = (
 // Render the uploaded image if it exists
 
 // Add this useEffect near other useEffect hooks
-useEffect(() => {
-  return () => {
-    // Cleanup old caches on component unmount
-    if ('caches' in window) {
-      caches.keys().then(cacheNames => {
-        cacheNames.forEach(cacheName => {
-          if (cacheName.startsWith('mathsketch-cache-') && cacheName !== CACHE_NAME) {
-            caches.delete(cacheName);
-          }
-        });
-      });
-    }
-  };
-}, []);
+
 
