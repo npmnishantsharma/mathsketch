@@ -89,7 +89,6 @@ export async function POST(req: NextRequest) {
     });
 
     // Cache the response
-    cache.put(cacheKey, response.clone());
     
     return response;
 
