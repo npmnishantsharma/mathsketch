@@ -10,6 +10,7 @@ export interface UserData {
   lastLogin: Date;
   points: number;
   profileImage: string | null;
+  geminiApiKey?: string;
 }
 
 export interface QuizData {

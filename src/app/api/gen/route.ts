@@ -43,16 +43,7 @@ export async function POST(req: NextRequest) {
     const { image, dict_of_vars } = await req.json();
 
     // Generate cache key based on input
-    const cacheKey = `gen-${JSON.stringify({ image, dict_of_vars })}`;
     
-    // Try to get cached response
-    const cache = await caches.open('mathsketch-api');
-    const cachedResponse = await cache.match(cacheKey);
-    
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-
     // Create model instance with optimized settings
     const model = genAI.getGenerativeModel({
       model: "learnlm-1.5-pro-experimental",
@@ -132,7 +123,6 @@ export async function POST(req: NextRequest) {
         message: "Analysis complete",
         data: validatedAnswers
       });
-      cache.put(cacheKey, newResponse.clone());
       
       return newResponse;
 

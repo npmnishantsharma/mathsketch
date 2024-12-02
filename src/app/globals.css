@@ -188,3 +188,8 @@ body {
 .animate-bounce {
   animation: bounce 1s infinite;
 }
+
+/* Add this to your existing CSS */
+.noteworthy-font {
+  font-family: 'Noteworthy', system-ui, sans-serif;
+}

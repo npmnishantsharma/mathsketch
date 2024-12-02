@@ -528,6 +528,7 @@ export default function DrawingCanvas({
         }
       }
     };
+    //
 
     initializeAnalytics();
   }, []);
@@ -1680,8 +1681,7 @@ Remember to:
           ? { ...box, isDragging: false, touchOffset: undefined }
           : box
       )
-    );
-  };
+    )  };
 
   // Add handler for question clicks
   const handleQuestionClick = (question: string) => {
@@ -2437,7 +2437,7 @@ Remember to:
   // Add this function to handle auto-solving
   const handleAutoSolve = async () => {
     // Don't solve if we're already solving or have solved this drawing
-    if (isAutoSolving || !lastDrawnPosition || hasAutoSolved) return;
+    if (isAutoSolving || !lastDrawnPosition || hasAutoSolved || !userProfile?.uid) return;
     
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -2481,6 +2481,7 @@ Remember to:
         },
         body: JSON.stringify({
           image: imageDataUrl,
+          userId: userProfile.uid
         }),
       });
 
@@ -2490,36 +2491,18 @@ Remember to:
         if (context && lastDrawnPosition) {
           const result = data.data[0].result;
           
-          // Style for the result text - using Noteworthy font with fallback
-          context.font = "bold 48px 'Noteworthy', system-ui, sans-serif";
+          // Style for the result text - using Noteworthy font
+          context.font = "300 48px Noteworthy, system-ui, sans-serif"; // Changed to weight 300 for Noteworthy
           context.textAlign = "left";
           context.textBaseline = "middle";
+          context.fillStyle = "#22c55e"; // Green color for the result
 
           // Position the result to the right of the last drawn position
           const xOffset = 50; // Space after the equation
           const x = lastDrawnPosition.x + xOffset;
           const y = lastDrawnPosition.y;
 
-          // First measure the text for the background
-          const metrics = context.measureText(result);
-          const padding = 10;
-
-          // Draw the background // Semi-transparent background
-          context.fillRect(
-            x - padding,
-            y - 24 - padding, // Adjusted for larger font size
-            metrics.width + padding * 2,
-            48 + padding * 2  // Adjusted for larger font size
-          );
-
-          // Draw the equals sign
-          context.fillStyle = "#22c55e";
-          context.font = "bold 32px 'Noteworthy', system-ui, sans-serif";
-          context.fillText("", x - 30, y);
-
           // Draw the result text
-          context.fillStyle = "#22c55e";
-          context.font = "bold 48px 'Noteworthy', system-ui, sans-serif";
           context.fillText(result, x, y);
         }
 
@@ -4300,5 +4283,6 @@ const collaboratorsToRecord = (
 // Render the uploaded image if it exists
 
 // Add this useEffect near other useEffect hooks
+
 
 

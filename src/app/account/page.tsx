@@ -131,7 +131,7 @@ export default function AccountPage() {
         bio,
         profileImage: imageUrl,
         lastUpdated: new Date(),
-        geminiApiKey: encryptedApiKey // Save the encrypted key
+        geminiApiKey: geminiApiKey // Save the encrypted key
       });
 
       // Update auth profile if name changed
