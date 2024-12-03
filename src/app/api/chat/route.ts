@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 // Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
 
 // System prompt to guide the AI's behavior
 const systemPrompt = `You are MathSketch AI, an advanced mathematics teaching assistant designed to help users understand mathematical concepts through their hand-drawn equations and diagrams. Your primary goal is to make mathematics accessible, engaging, and clear for all users.
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
     // Create model instance
     const model = genAI.getGenerativeModel({
-      model: "gemini-pro",
+      model: "learnlm-1.5-pro-experimental",
       generationConfig: {
         temperature: 0.7,
         topK: 1,

@@ -384,6 +384,16 @@ const getCachedData = async (key: string) => {
   return null;
 };
 
+// Add this new interface near the top with other interfaces
+interface AutoSolveResult {
+  result: string;
+  x: number;
+  y: number;
+  isValidated: boolean;
+  isAccepted?: boolean;
+  messages: ChatMessage[];
+}
+
 // Update the component definition - remove collaborators from props
 export default function DrawingCanvas({
   isCollaboration = false,
@@ -515,6 +525,10 @@ export default function DrawingCanvas({
   const [lastDrawnPosition, setLastDrawnPosition] = useState<{x: number, y: number} | null>(null);
   // Add this state to track if we've already solved the current drawing
   const [hasAutoSolved, setHasAutoSolved] = useState(false);
+  // Add this new state
+  const [autoSolveResult, setAutoSolveResult] = useState<AutoSolveResult | null>(null);
+  // Add this state to track chat popup visibility
+  const [showAutoSolveChat, setShowAutoSolveChat] = useState(false);
 
   useEffect(() => {
     const initializeAnalytics = async () => {
@@ -846,19 +860,26 @@ export default function DrawingCanvas({
     }
   };
 
+  // Update the stopDrawing function
   const stopDrawing = async () => {
     setIsDrawing(false);
     setLastX(null);
     setLastY(null);
 
-    // Clear any existing timer
-    if (autoSolveTimer) {
-      clearTimeout(autoSolveTimer);
-    }
+    // Only set up auto-solve timer if:
+    // 1. We haven't already solved this drawing
+    // 2. We have a last drawn position
+    // 3. No existing timer is running
+    if (!hasAutoSolved && lastDrawnPosition && !autoSolveTimer && !isAutoSolving) {
+      // Clear any existing timer just to be safe
+      if (autoSolveTimer) {
+        clearTimeout(autoSolveTimer);
+      }
 
-    // Set new timer for auto-solve
-    const timer = setTimeout(handleAutoSolve, 3000); // 3 seconds
-    setAutoSolveTimer(timer);
+      // Set new timer for auto-solve
+      const timer = setTimeout(handleAutoSolve, 2000);
+      setAutoSolveTimer(timer);
+    }
 
     if (isCollaboration && sessionId && userProfile?.uid) {
       const rtdb = getDatabase();
@@ -1329,7 +1350,7 @@ Remember to:
 
     try {
       const response = await fetch(
-        `https://${process.env.NEXT_PUBLIC_CHAT_URL}/web/chat/${Date.now()}`,
+        `/api/chat?sessionId=${Date.now()}`,
         {
           method: "POST",
           headers: {
@@ -2436,9 +2457,24 @@ Remember to:
 
   // Add this function to handle auto-solving
   const handleAutoSolve = async () => {
-    // Don't solve if we're already solving or have solved this drawing
     if (isAutoSolving || !lastDrawnPosition || hasAutoSolved || !userProfile?.uid) return;
     
+    // Clear the timer
+    if (autoSolveTimer) {
+      clearTimeout(autoSolveTimer);
+      setAutoSolveTimer(null);
+    }
+
+    // Show validation box with loading state immediately
+    setAutoSolveResult({
+      result: "",
+      x: lastDrawnPosition.x + 50,
+      y: lastDrawnPosition.y,
+      isValidated: false,
+      messages: [] // Initialize empty messages array
+    });
+    setIsAutoSolving(true);
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -2473,7 +2509,6 @@ Remember to:
     const imageDataUrl = tempCanvas.toDataURL("image/png");
 
     try {
-      setIsAutoSolving(true);
       const response = await fetch("/api/gen/auto", {
         method: "POST",
         headers: {
@@ -2487,39 +2522,25 @@ Remember to:
 
       const data = await response.json();
       if (data.status === "success" && data.data[0].result !== "") {
-        // Draw the result on the canvas
-        if (context && lastDrawnPosition) {
-          const result = data.data[0].result;
-          
-          // Style for the result text - using Noteworthy font
-          context.font = "300 48px Noteworthy, system-ui, sans-serif"; // Changed to weight 300 for Noteworthy
-          context.textAlign = "left";
-          context.textBaseline = "middle";
-          context.fillStyle = "#22c55e"; // Green color for the result
-
-          // Position the result to the right of the last drawn position
-          const xOffset = 50; // Space after the equation
-          const x = lastDrawnPosition.x + xOffset;
-          const y = lastDrawnPosition.y;
-
-          // Draw the result text
-          context.fillText(result, x, y);
-        }
-
-        // Mark this drawing as solved
-        setHasAutoSolved(true);
+        // Update the existing autoSolveResult with the actual result
+        setAutoSolveResult(prev => ({
+          ...prev!,
+          result: data.data[0].result,
+        }));
         
         // Update state with the response
         setApiResponse(data);
       }
     } catch (error) {
       console.error("Auto-solve error:", error);
+      // Clear the validation box on error
+      setAutoSolveResult(null);
     } finally {
       setIsAutoSolving(false);
     }
   };
 
-  // Also update clearCanvas to reset the auto-solve state
+  // Update the clearCanvas function to also clear the timer
   const clearCanvas = () => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
@@ -2528,7 +2549,13 @@ Remember to:
       context.clearRect(0, 0, canvas.width, canvas.height);
       applyGradient(context, canvas);
       setLastDrawnPosition(null);
-      setHasAutoSolved(false); // Reset auto-solve state when clearing canvas
+      setHasAutoSolved(false);
+      
+      // Clear any existing auto-solve timer
+      if (autoSolveTimer) {
+        clearTimeout(autoSolveTimer);
+        setAutoSolveTimer(null);
+      }
     }
   };
 
@@ -2540,6 +2567,98 @@ Remember to:
       }
     };
   }, [autoSolveTimer]);
+
+  // Add these new handler functions
+  const handleAcceptResult = () => {
+    if (!autoSolveResult || !canvasRef.current) return;
+    
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    
+    if (context) {
+      // Draw the accepted result in green
+      context.font = "300 48px Noteworthy, system-ui, sans-serif";
+      context.textAlign = "left";
+      context.textBaseline = "middle";
+      context.fillStyle = "#22c55e";
+      context.fillText(autoSolveResult.result, autoSolveResult.x, autoSolveResult.y);
+      
+      // Update the result state
+      setAutoSolveResult({
+        ...autoSolveResult,
+        isValidated: true,
+        isAccepted: true,
+        messages: autoSolveResult.messages || [] // Ensure messages exists
+      });
+      
+      // Mark this drawing as solved
+      setHasAutoSolved(true);
+      
+      // Award points for using auto-solve
+      updatePoints(5);
+    }
+  };
+
+  const handleRejectResult = () => {
+    setAutoSolveResult({
+      ...autoSolveResult!,
+      isValidated: true,
+      isAccepted: false,
+      messages: autoSolveResult!.messages || [] // Ensure messages exists
+    });
+    setHasAutoSolved(false); // Allow another attempt
+  };
+
+  // Add this new function to handle chat messages in auto-solve
+  const handleAutoSolveChat = async (message: string) => {
+    if (!autoSolveResult) return;
+
+    // Add user message
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: message
+    };
+
+    setAutoSolveResult(prev => ({
+      ...prev!,
+      messages: [...(prev?.messages || []), userMessage]
+    }));
+
+    try {
+      // Show loading state
+      setIsAutoSolving(true);
+
+      const response = await fetch(`/api/chat?sessionId=${Date.now()}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message,
+          result: autoSolveResult.result,
+          userId: userProfile?.uid
+        }),
+      });
+
+      const data = await response.json();
+      
+      // Add AI response
+      const aiMessage: ChatMessage = {
+        role: 'assistant',
+        content: data.message
+      };
+
+      setAutoSolveResult(prev => ({
+        ...prev!,
+        messages: [...(prev?.messages || []), aiMessage]
+      }));
+
+    } catch (error) {
+      console.error("Auto-solve chat error:", error);
+    } finally {
+      setIsAutoSolving(false);
+    }
+  };
 
   // Update the canvas event handlers
   return (
@@ -3564,7 +3683,7 @@ Remember to:
                       type="text"
                       placeholder={
                         isGenerating
-                          ? "AI is generating..."
+                          ? "AI is thinking..."
                           : "Type your message..."
                       }
                       value={currentMessage}
@@ -3593,11 +3712,8 @@ Remember to:
                       }}
                     >
                       {isGenerating ? (
-                        <div className="flex items-center">
-                          <div className="animate-spin mr-2">
-                            <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full" />
-                          </div>
-                          Generating...
+                        <div className="flex items-center gap-2">
+                          <Send className="h-4 w-4 animate-pulse" />
                         </div>
                       ) : (
                         <Send className="h-4 w-4" />
@@ -4057,6 +4173,118 @@ Remember to:
                 onClose={() => setShowCollabChat(false)}
               />
             )}
+            {autoSolveResult && !autoSolveResult.isValidated && (
+              <div 
+                className="fixed p-4 rounded-lg shadow-lg w-80"
+                style={{
+                  backgroundColor: currentTheme.background,
+                  color: currentTheme.text,
+                  border: `2px solid ${currentTheme.primary}`,
+                  left: `${autoSolveResult.x}px`,
+                  top: `${autoSolveResult.y - 100}px`
+                }}
+              >
+                <div className="flex flex-col gap-3">
+                  <div className="text-lg font-medium">Verify Result:</div>
+                  <div className="text-2xl font-bold">
+                    {isAutoSolving ? "Analyzing..." : autoSolveResult.result}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleAcceptResult}
+                      className="flex-1"
+                      disabled={isAutoSolving}
+                      style={{
+                        backgroundColor: "#22c55e",
+                        color: currentTheme.text,
+                        opacity: isAutoSolving ? 0.5 : 1
+                      }}
+                    >
+                      ✓ Accept
+                    </Button>
+                    <Button
+                      onClick={handleRejectResult}
+                      className="flex-1"
+                      disabled={isAutoSolving}
+                      style={{
+                        backgroundColor: "#ef4444",
+                        color: currentTheme.text,
+                        opacity: isAutoSolving ? 0.5 : 1
+                      }}
+                    >
+                      ✗ Reject
+                    </Button>
+                  </div>
+
+                  {/* Chat Section */}
+                  <div className="mt-4 border-t pt-4" style={{ borderColor: currentTheme.secondary }}>
+                    <div className="text-sm font-medium mb-2">Questions about the result?</div>
+                    
+                    {/* Messages */}
+                    <ScrollArea className="h-40 mb-2">
+                      <div className="space-y-2">
+                        {autoSolveResult.messages.map((message, index) => (
+                          <div
+                            key={index}
+                            className={`p-2 rounded-lg text-sm ${
+                              message.role === 'user' ? 'ml-auto max-w-[80%]' : 'mr-auto max-w-[80%]'
+                            }`}
+                            style={{
+                              backgroundColor: message.role === 'user' 
+                                ? currentTheme.primary 
+                                : currentTheme.secondary,
+                            }}
+                          >
+                            {message.content}
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+
+                    {/* Input */}
+                    <form 
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const input = e.currentTarget.elements.namedItem('message') as HTMLInputElement;
+                        if (input.value.trim()) {
+                          handleAutoSolveChat(input.value);
+                          input.value = '';
+                        }
+                      }}
+                      className="flex gap-2"
+                    >
+                      <Input
+                        name="message"
+                        placeholder={isAutoSolving ? "AI is thinking..." : "Ask a question..."}
+                        className="flex-1"
+                        disabled={isAutoSolving}
+                        style={{
+                          backgroundColor: currentTheme.secondary,
+                          color: currentTheme.text,
+                          borderColor: currentTheme.primary,
+                          opacity: isAutoSolving ? 0.7 : 1
+                        }}
+                      />
+                      <Button
+                        type="submit"
+                        disabled={isAutoSolving}
+                        style={{
+                          backgroundColor: currentTheme.primary,
+                          color: currentTheme.text,
+                          opacity: isAutoSolving ? 0.7 : 1
+                        }}
+                      >
+                        {isAutoSolving ? (
+                          <Send className="h-4 w-4 animate-pulse" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -4278,11 +4506,121 @@ const collaboratorsToRecord = (
   }, {} as Record<string, Participant>);
 };
 
-// Update the loadCanvasState function to handle image data URLs
+// Add this new component for the chat popup
+const AutoSolveChatPopup = ({ 
+  messages, 
+  onClose, 
+  onSend, 
+  isGenerating, 
+  theme 
+}: { 
+  messages: ChatMessage[],
+  onClose: () => void,
+  onSend: (message: string) => void,
+  isGenerating: boolean,
+  theme: Theme
+}) => {
+  const [currentMessage, setCurrentMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-// Render the uploaded image if it exists
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-// Add this useEffect near other useEffect hooks
+  return (
+    <div 
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div 
+        className="w-full max-w-lg h-[80vh] m-4 rounded-lg flex flex-col"
+        style={{
+          backgroundColor: theme.background,
+          color: theme.text,
+          border: `1px solid ${theme.primary}`
+        }}
+      >
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 border-b" style={{ borderColor: theme.secondary }}>
+          <h3 className="text-lg font-semibold">Chat about Result</h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            style={{ color: theme.text }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
+        {/* Messages */}
+        <ScrollArea 
+          className="flex-1 p-4"
+          ref={scrollAreaRef}
+        >
+          <div className="space-y-4">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className="max-w-[80%] p-3 rounded-lg"
+                  style={{
+                    backgroundColor: message.role === 'user' ? theme.primary : theme.secondary
+                  }}
+                >
+                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
 
-
+        {/* Input */}
+        <div className="p-4 border-t" style={{ borderColor: theme.secondary }}>
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (currentMessage.trim()) {
+                onSend(currentMessage);
+                setCurrentMessage("");
+              }
+            }}
+            className="flex gap-2"
+          >
+            <Input
+              value={currentMessage}
+              onChange={(e) => setCurrentMessage(e.target.value)}
+              placeholder={isGenerating ? "AI is thinking..." : "Ask a question..."}
+              disabled={isGenerating}
+              style={{
+                backgroundColor: theme.secondary,
+                color: theme.text,
+                borderColor: theme.primary
+              }}
+            />
+            <Button
+              type="submit"
+              disabled={isGenerating}
+              style={{
+                backgroundColor: theme.primary,
+                color: theme.text
+              }}
+            >
+              {isGenerating ? (
+                <Send className="h-4 w-4 animate-pulse" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
