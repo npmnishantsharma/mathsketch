@@ -25,12 +25,7 @@ async function solveMathEquation(imageData: string): Promise<string> {
 
     // Prepare the prompt
     const prompt = `
-      Give the answer to this math equation. 
-      Only respond with the answer. 
-      Only respond with numbers. NEVER Words. 
-      Only answer unanswered expressions. 
-      Look for equal sign with nothing on the right of it. 
-      If it has an answer already, DO NOT ANSWER it.
+      Respond only with the numerical result for equations where the right side of = is blank. Ignore equations already solved or irrelevant content. Provide only numbers—no words, explanations, or formatting.
     `;
 
     // Remove data URL prefix if present
