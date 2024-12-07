@@ -19,8 +19,13 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
 images:{
-  domains:["lh3.googleusercontent.com"]
-}
+  domains:["lh3.googleusercontent.com","res.cloudinary.com"]
+},
+compiler:{
+  removeConsole: process.env.NODE_ENV === 'production',
+},
+reactStrictMode: true,
+poweredByHeader: false,
 
 
 };

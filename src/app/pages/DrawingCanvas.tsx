@@ -394,6 +394,36 @@ interface AutoSolveResult {
   messages: ChatMessage[];
 }
 
+// Add this helper function near the top with other utility functions
+const applyCanvasBackground = (
+  context: CanvasRenderingContext2D, 
+  canvas: HTMLCanvasElement,
+  theme: Theme
+) => {
+  if (theme.gradientFrom && theme.gradientTo) {
+    // Create gradient
+    const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+    const fromColor = getTailwindColor(theme.gradientFrom.replace("from-", ""));
+    const viaColor = theme.gradientVia 
+      ? getTailwindColor(theme.gradientVia.replace("via-", ""))
+      : null;
+    const toColor = getTailwindColor(theme.gradientTo.replace("to-", ""));
+
+    // Add color stops
+    gradient.addColorStop(0, fromColor);
+    if (viaColor) {
+      gradient.addColorStop(0.5, viaColor);
+    }
+    gradient.addColorStop(1, toColor);
+    
+    context.fillStyle = gradient;
+  } else {
+    context.fillStyle = theme.background;
+  }
+
+  context.fillRect(0, 0, canvas.width, canvas.height);
+};
+
 // Update the component definition - remove collaborators from props
 export default function DrawingCanvas({
   isCollaboration = false,
@@ -680,35 +710,8 @@ export default function DrawingCanvas({
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        // Reapply gradient or background
-        if (currentTheme.gradientFrom && currentTheme.gradientTo) {
-          const gradient = context.createLinearGradient(
-            0,
-            0,
-            canvas.width,
-            canvas.height
-          );
-          const fromColor = getTailwindColor(
-            currentTheme.gradientFrom.replace("from-", "")
-          );
-          const viaColor = currentTheme.gradientVia
-            ? getTailwindColor(currentTheme.gradientVia.replace("via-", ""))
-            : null;
-          const toColor = getTailwindColor(
-            currentTheme.gradientTo.replace("to-", "")
-          );
-
-          gradient.addColorStop(0, fromColor);
-          if (viaColor) {
-            gradient.addColorStop(0.5, viaColor);
-          }
-          gradient.addColorStop(1, toColor);
-          context.fillStyle = gradient;
-        } else {
-          context.fillStyle = currentTheme.background;
-        }
-
-        context.fillRect(0, 0, canvas.width, canvas.height);
+        // Apply background
+        applyCanvasBackground(context, canvas, currentTheme);
       }
     };
 
@@ -720,22 +723,27 @@ export default function DrawingCanvas({
     };
   }, [currentTheme]);
 
-  // Add this new useEffect to reinitialize canvas context when auth state or theme changes
+  // Update the useEffect that handles initial canvas setup
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
 
     if (context && canvas) {
-      // Set initial canvas properties
-      context.fillStyle = currentTheme.background;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      context.strokeStyle = currentTheme.text; // Use theme's text color for stroke
-      setColor(currentTheme.text); // Update color state when theme changes
+      // Set canvas dimensions
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      // Apply background
+      applyCanvasBackground(context, canvas, currentTheme);
+
+      // Set initial drawing properties
+      context.strokeStyle = currentTheme.text;
+      setColor(currentTheme.text);
       context.lineWidth = lineWidth;
       context.lineCap = "round";
       context.lineJoin = "round";
     }
-  }, [userProfile, currentTheme]);
+  }, [currentTheme, lineWidth]); // Add dependencies
 
   const handleImageClick = (image: string) => {
     const imgElement = document.createElement("img");
