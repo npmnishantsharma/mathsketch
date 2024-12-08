@@ -180,6 +180,12 @@ export default function IntroPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { scrollYProgress } = useScroll();
 
+  // Move these hooks before any conditional returns
+  const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const previewsY = useTransform(scrollYProgress, [0.1, 0.3], [100, 0]);
+  const previewsOpacity = useTransform(scrollYProgress, [0.1, 0.3], [0, 1]);
+
   // Add authentication check
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -193,6 +199,17 @@ export default function IntroPage() {
 
     return () => unsubscribe();
   }, [router]);
+
+  const generateRandomPosition = () => ({
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    scale: 0.5 + Math.random() * 0.5,
+    rotate: Math.random() * 30 - 15,
+  });
+
+  const particles = Array.from({ length: 20 }, (_, i) => (
+    <MathParticle key={i} delay={i * 0.5} />
+  ));
 
   // Show loading state while checking auth
   if (isLoading) {
@@ -210,23 +227,6 @@ export default function IntroPage() {
   if (user) {
     return null;
   }
-
-  // Create scroll-based animations
-  const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-  const previewsY = useTransform(scrollYProgress, [0.1, 0.3], [100, 0]);
-  const previewsOpacity = useTransform(scrollYProgress, [0.1, 0.3], [0, 1]);
-
-  const generateRandomPosition = () => ({
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    scale: 0.5 + Math.random() * 0.5,
-    rotate: Math.random() * 30 - 15,
-  });
-
-  const particles = Array.from({ length: 20 }, (_, i) => (
-    <MathParticle key={i} delay={i * 0.5} />
-  ));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-950 via-indigo-950 to-slate-900 overflow-x-hidden">
